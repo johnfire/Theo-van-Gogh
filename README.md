@@ -1,0 +1,225 @@
+# Art Processor - Phase 1
+
+Automated painting metadata generation system for managing artwork files.
+
+## Features
+
+- **AI-Powered Analysis**: Uses Claude's vision capabilities to analyze paintings
+- **Title Generation**: Creates 5 diverse, gallery-quality title options
+- **Professional Descriptions**: Generates collector-focused descriptions with visual analysis, emotional impact, and technical notes
+- **Smart File Management**: Pairs and renames both big and Instagram versions of paintings
+- **Extensible Metadata**: JSON and text output for easy integration with other systems
+- **Interactive CLI**: Beautiful terminal interface for easy workflow
+
+## Prerequisites
+
+- Python 3.8+
+- Anthropic API key ([Get one here](https://console.anthropic.com/))
+- Paintings organized in folder structure:
+  ```
+  Pictures/
+  ├── my-paintings-big/
+  │   ├── landscapes/
+  │   ├── abstract/
+  │   └── ...
+  └── my-paintings-instagram/
+      ├── landscapes/
+      ├── abstract/
+      └── ...
+  ```
+
+## Installation
+
+1. **Clone/Download the project**
+
+2. **Create virtual environment**
+   ```bash
+   cd art-processor
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your settings:
+   # - ANTHROPIC_API_KEY=your_key_here
+   # - PAINTINGS_BIG_PATH=/path/to/your/Pictures/my-paintings-big
+   # - PAINTINGS_INSTAGRAM_PATH=/path/to/your/Pictures/my-paintings-instagram
+   # - METADATA_OUTPUT_PATH=/path/to/your/Pictures/processed-metadata
+   ```
+
+5. **Verify setup**
+   ```bash
+   python main.py verify-config
+   ```
+
+## Usage
+
+### Process a Single Category
+
+```bash
+python main.py process --category landscapes
+```
+
+### Process All Categories
+
+```bash
+python main.py process --all
+```
+
+### List Available Categories
+
+```bash
+python main.py list-categories
+```
+
+## Workflow
+
+When processing a painting, the system will:
+
+1. **Display file information** - Shows both big and Instagram versions
+2. **Analyze the image** - Extracts dimensions from EXIF data
+3. **Generate 5 title options** - Diverse styles (poetic, descriptive, location-based, emotional, abstract)
+4. **Prompt for title selection** - You choose your favorite
+5. **Prompt for medium** - Select from: Oil, Watercolor, Acrylic, Drawing, Woodblock print
+6. **Prompt for price** - Enter price in euros
+7. **Suggest creation date** - From EXIF or file metadata (you can override)
+8. **Generate description** - AI writes gallery-quality description based on your selections
+9. **Rename files** - Both versions renamed to sanitized title (e.g., `bavarian_twilight.jpg`)
+10. **Save metadata** - Creates both JSON and human-readable text files
+
+## Output Structure
+
+```
+Pictures/processed-metadata/
+└── landscapes/
+    ├── bavarian_twilight.json
+    └── bavarian_twilight.txt
+```
+
+### JSON Format
+
+```json
+{
+  "filename_base": "bavarian_twilight",
+  "category": "landscapes",
+  "files": {
+    "big": "/path/to/my-paintings-big/landscapes/bavarian_twilight.jpg",
+    "instagram": "/path/to/my-paintings-instagram/landscapes/bavarian_twilight.jpg"
+  },
+  "title": {
+    "selected": "Bavarian Twilight",
+    "all_options": [
+      "Golden Hour Over the Alps",
+      "Bavarian Twilight",
+      "Alpine Glow",
+      "Evening Contemplation",
+      "Sunset at 1200 Meters"
+    ]
+  },
+  "description": "This watercolor captures the luminous quality...",
+  "dimensions": "60cm x 80cm",
+  "medium": "Watercolor",
+  "price_eur": 450.0,
+  "creation_date": "2025-01-15",
+  "processed_date": "2025-02-07T15:30:00",
+  "analyzed_from": "big"
+}
+```
+
+## Extending the System
+
+### Adding New Categories
+
+Simply create new subfolders in both:
+- `my-paintings-big/new_category/`
+- `my-paintings-instagram/new_category/`
+
+The system will auto-discover them.
+
+### Adding New Mediums
+
+Edit `config/settings.py`:
+
+```python
+MEDIUMS = [
+    "Oil on canvas",
+    "Watercolor",
+    "Acrylic",
+    "Drawing",
+    "Woodblock print",
+    "Mixed media",  # Add new ones here
+    "Digital art",
+]
+```
+
+### Customizing AI Prompts
+
+Edit `config/prompts.py` to adjust:
+- Title generation style
+- Description format and content
+- Tone and perspective
+
+## Phase 2 (Future)
+
+Phase 2 will add:
+- FASO website automation (automatic upload)
+- Social media posting (Instagram, Mastodon, Bluesky, etc.)
+- Batch processing without interaction
+- Web dashboard interface
+- Scheduled/cron job support
+
+## Troubleshooting
+
+### "Anthropic API key: NOT configured"
+- Make sure you've created `.env` from `.env.example`
+- Add your actual API key to the `ANTHROPIC_API_KEY` field
+
+### "No categories found"
+- Verify your paths in `.env`
+- Make sure folders exist and contain subfolders (categories)
+- Run `python main.py verify-config` to check
+
+### Image dimension detection returns pixels instead of cm
+- Some images lack proper DPI metadata
+- You can manually override dimensions after they're displayed
+
+### "Module not found" errors
+- Make sure virtual environment is activated: `source venv/bin/activate`
+- Reinstall dependencies: `pip install -r requirements.txt`
+
+## Project Structure
+
+```
+art-processor/
+├── config/
+│   ├── __init__.py
+│   ├── settings.py          # Configuration and extensible lists
+│   └── prompts.py           # AI prompt templates
+├── src/
+│   ├── __init__.py
+│   ├── image_analyzer.py    # Claude vision API integration
+│   ├── file_manager.py      # File operations and renaming
+│   ├── metadata_manager.py  # JSON/text file generation
+│   └── cli_interface.py     # Interactive terminal UI
+├── main.py                  # CLI entry point
+├── requirements.txt         # Python dependencies
+├── .env.example            # Configuration template
+└── README.md               # This file
+```
+
+## License
+
+Private project for Christopher Rehm's art management workflow.
+
+## Support
+
+For issues or questions about this system, contact the developer or refer to:
+- Anthropic API docs: https://docs.anthropic.com/
+- Python PIL/Pillow docs: https://pillow.readthedocs.io/
