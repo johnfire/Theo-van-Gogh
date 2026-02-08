@@ -29,7 +29,7 @@ class AdminMode:
             self.show_main_menu()
             choice = IntPrompt.ask(
                 "\nSelect option",
-                choices=["1", "2", "3", "4", "5", "0"],
+                choices=["1", "2", "3", "4", "5", "6", "0"],
                 default="0"
             )
             
@@ -45,6 +45,8 @@ class AdminMode:
             elif choice == 4:
                 self.add_to_list()
             elif choice == 5:
+                self.manage_social_platforms()
+            elif choice == 6:
                 self.view_current_settings()
     
     def show_main_menu(self):
@@ -59,7 +61,8 @@ class AdminMode:
         table.add_row("2", "Edit File Paths")
         table.add_row("3", "Edit Dimension Unit (cm/in)")
         table.add_row("4", "Add to Lists (Substrates, Mediums, etc.)")
-        table.add_row("5", "View Current Settings")
+        table.add_row("5", "Manage Social Media Platforms")
+        table.add_row("6", "View Current Settings")
         table.add_row("0", "Exit Admin Mode")
         
         self.console.print(table)
@@ -258,6 +261,36 @@ class AdminMode:
             self.console.print(f'[green]✓ Added "{new_entry}" to {display_name}s[/green]')
         else:
             self.console.print(f"[red]Could not find {var_name} list in settings[/red]")
+    
+    def manage_social_platforms(self):
+        """Manage social media platforms for upload tracking."""
+        from pathlib import Path
+        from src.upload_tracker import UploadTracker
+        
+        self.console.print("\n[bold]Manage Social Media Platforms[/bold]")
+        
+        # Get tracker file path
+        tracker_path = self.settings_path.parent.parent / "upload_status.json"
+        tracker = UploadTracker(tracker_path)
+        
+        # Show current platforms
+        platforms = tracker.get_platforms()
+        
+        self.console.print("\n[cyan]Current Platforms:[/cyan]")
+        for i, platform in enumerate(platforms, 1):
+            self.console.print(f"  {i}. {platform}")
+        
+        # Ask to add new platform
+        add_new = Confirm.ask("\nAdd a new platform?", default=True)
+        
+        if add_new:
+            platform_name = Prompt.ask("Enter platform name (e.g., Instagram, Mastodon, TikTok)")
+            
+            if platform_name:
+                tracker.add_platform(platform_name)
+                self.console.print(f"[green]✓ Added platform: {platform_name}[/green]")
+            else:
+                self.console.print("[yellow]No platform added[/yellow]")
     
     def view_current_settings(self):
         """Display current configuration settings."""

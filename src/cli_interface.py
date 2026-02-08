@@ -82,6 +82,26 @@ class CLIInterface:
         
         return choice - 1
     
+    def ask_for_user_title(self) -> tuple:
+        """
+        Ask if user has their own title or wants AI to generate.
+        
+        Returns:
+            Tuple of (has_own_title: bool, title: str or None)
+        """
+        self.print_header("Painting Title")
+        
+        has_own = Confirm.ask(
+            "Do you have a name for this painting?",
+            default=False
+        )
+        
+        if has_own:
+            title = Prompt.ask("Enter your title for this painting")
+            return True, title
+        else:
+            return False, None
+    
     def select_substrate(self) -> str:
         """
         Let user select substrate from predefined options.

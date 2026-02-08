@@ -96,8 +96,9 @@ def process():
         ui.print_info(f"Found {len(painting_pairs)} painting(s)")
         
         # Process each painting
+        processed_filenames = []
         for big_file, instagram_file in painting_pairs:
-            process_single_painting(
+            result = process_single_painting(
                 big_file,
                 instagram_file,
                 category,
@@ -106,8 +107,57 @@ def process():
                 analyzer,
                 metadata_mgr,
             )
+            if result:  # If processing succeeded
+                processed_filenames.append(result)
         
-        ui.print_success("\nProcessing complete!")
+        ui.print_success(f"\nProcessing complete! Processed {len(processed_filenames)} painting(s)")
+        
+        # Step: Organize paintings into collection folders
+        if processed_filenames:
+            ui.print_header("\nOrganizing Paintings")
+            ui.print_info("Moving paintings to collection folders...")
+            
+            from src.file_organizer import FileOrganizer
+            from src.upload_tracker import UploadTracker
+            from config.settings import METADATA_OUTPUT_PATH
+            
+            organizer = FileOrganizer(
+                PAINTINGS_BIG_PATH,
+                PAINTINGS_INSTAGRAM_PATH,
+                METADATA_OUTPUT_PATH
+            )
+            
+            results = organizer.organize_all_new_paintings()
+            
+            ui.print_success(f"\nOrganized {results['success']} of {results['processed']} paintings")
+            
+            if results['errors']:
+                ui.print_warning(f"{len(results['errors'])} errors occurred:")
+                for error in results['errors']:
+                    ui.print_error(f"  {error}")
+            
+            # Step: Update upload tracker
+            ui.print_info("\nUpdating upload tracker...")
+            tracker_path = Path.cwd() / "upload_status.json"
+            tracker = UploadTracker(tracker_path)
+            
+            for filename in processed_filenames:
+                metadata_file = METADATA_OUTPUT_PATH / "new-paintings" / f"{filename}.json"
+                # After organizing, metadata is in collection folder
+                # We need to find it
+                import json
+                for collection_folder in METADATA_OUTPUT_PATH.iterdir():
+                    if collection_folder.is_dir():
+                        candidate = collection_folder / f"{filename}.json"
+                        if candidate.exists():
+                            tracker.add_painting(filename, str(candidate))
+                            break
+            
+            pending = tracker.get_all_pending()
+            ui.print_success(f"\nUpload tracker updated")
+            ui.print_info(f"Paintings pending upload:")
+            for platform, paintings in pending.items():
+                ui.print_info(f"  {platform}: {len(paintings)} painting(s)")
         
     except KeyboardInterrupt:
         ui.print_warning("\nProcessing interrupted by user")
@@ -127,7 +177,7 @@ def process_single_painting(
     file_mgr: FileManager,
     analyzer: ImageAnalyzer,
     metadata_mgr: MetadataManager,
-):
+) -> str:
     """
     Process a single painting through the complete workflow.
     
@@ -151,12 +201,12 @@ def process_single_painting(
         )
         if skip:
             ui.print_info("Skipping")
-            return
+            return None
     else:
         # Ask for confirmation
         if not ui.confirm_processing(big_file.name):
             ui.print_info("Skipping")
-            return
+            return None
     
     try:
         # Import DIMENSION_UNIT from settings
@@ -169,13 +219,22 @@ def process_single_painting(
         if analyze_file == big_file and not instagram_file:
             ui.print_warning("No Instagram version found - using big version for analysis")
         
-        # Step 1: Generate titles
-        ui.print_info("Generating titles...")
-        titles = analyzer.generate_titles(analyze_file)
+        # Step 1: Ask if user has their own title
+        has_own_title, user_title = ui.ask_for_user_title()
         
-        # Step 2: User selects title
-        selected_index = ui.select_title(titles)
-        selected_title = titles[selected_index]
+        if has_own_title:
+            # User provided their own title
+            selected_title = user_title
+            all_titles = [user_title]  # Store as single-item list for metadata
+        else:
+            # Generate AI titles
+            ui.print_info("Generating titles...")
+            titles = analyzer.generate_titles(analyze_file)
+            
+            # Step 2: User selects from AI-generated titles
+            selected_index = ui.select_title(titles)
+            selected_title = titles[selected_index]
+            all_titles = titles
         
         # Step 3: User inputs dimensions manually (width, height, depth)
         width, height, depth, dimensions_formatted = ui.input_dimensions(unit=DIMENSION_UNIT)
@@ -231,7 +290,7 @@ def process_single_painting(
             big_file_path=new_big_path,
             instagram_file_path=new_instagram_path,
             selected_title=selected_title,
-            all_titles=titles,
+            all_titles=all_titles,  # Changed from 'titles'
             description=description,
             width=width,
             height=height,
@@ -257,6 +316,9 @@ def process_single_painting(
         
         # Show summary
         ui.show_processing_summary(metadata)
+        
+        # Return filename for tracking
+        return sanitized_name
         
     except Exception as e:
         ui.print_error(f"Error processing {big_file.name}: {e}")
