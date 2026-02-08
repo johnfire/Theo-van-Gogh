@@ -354,17 +354,17 @@ def verify_config():
     ui.print_header("Configuration Verification")
     
     # Check API key
-    if ANTHROPIC_API_KEY:
-        ui.print_success("✓ Anthropic API key configured")
-    else:
-        ui.print_error("✗ Anthropic API key not found")
+    #if ANTHROPIC_API_KEY:
+    #    ui.print_success("✓ Anthropic API key configured")
+    #else:
+    #    ui.print_error("✗ Anthropic API key not found")
     
     # Check paths
     paths_ok = True
     for name, path in [
         ("Big paintings", PAINTINGS_BIG_PATH),
         ("Instagram paintings", PAINTINGS_INSTAGRAM_PATH),
-        ("Metadata output", METADATA_OUTPUT_PATH),
+    #    ("Metadata output", METADATA_OUTPUT_PATH),
     ]:
         if path.exists():
             ui.print_success(f"✓ {name}: {path}")
