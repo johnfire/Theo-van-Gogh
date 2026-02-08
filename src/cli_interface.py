@@ -13,7 +13,6 @@ from rich.panel import Panel
 
 from config.settings import (
     MEDIUMS,
-    CATEGORIES,
     SUBSTRATES,
     SUBJECTS,
     STYLES,
@@ -53,39 +52,6 @@ class CLIInterface:
         """Print info message."""
         self.console.print(f"[blue]→[/blue] {text}")
     
-    def select_category(self, available_categories: List[str]) -> Optional[str]:
-        """
-        Let user select a category from available options.
-        
-        Args:
-            available_categories: List of discovered categories
-            
-        Returns:
-            Selected category name or None if cancelled
-        """
-        self.print_header("Available Categories")
-        
-        table = Table(show_header=True, header_style="bold magenta")
-        table.add_column("No.", style="dim", width=6)
-        table.add_column("Category")
-        table.add_column("Path")
-        
-        for i, cat in enumerate(available_categories, 1):
-            table.add_row(str(i), cat, f".../{cat}")
-        
-        self.console.print(table)
-        
-        # Get user selection
-        choice = IntPrompt.ask(
-            "\nSelect category number (0 to cancel)",
-            default=1,
-            show_default=True,
-        )
-        
-        if choice == 0 or choice > len(available_categories):
-            return None
-        
-        return available_categories[choice - 1]
     
     def select_title(self, titles: List[str]) -> int:
         """

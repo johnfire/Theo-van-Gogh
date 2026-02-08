@@ -9,21 +9,47 @@ from pathlib import Path
 
 import click
 from rich.console import Console
+from rich.prompt import Confirm
 
 from src.image_analyzer import ImageAnalyzer
 from src.file_manager import FileManager
 from src.metadata_manager import MetadataManager
 from src.cli_interface import CLIInterface
+from src.admin_mode import AdminMode
 from config.settings import PAINTINGS_BIG_PATH, PAINTINGS_INSTAGRAM_PATH
 
 
 console = Console()
 
 
-@click.group()
-def cli():
+@click.group(invoke_without_command=True)
+@click.pass_context
+def cli(ctx):
     """Art Processor - Automated painting metadata generation and management."""
-    pass
+    if ctx.invoked_subcommand is None:
+        # Show admin mode option at startup
+        console.print("\n[bold cyan]Art Processor[/bold cyan]\n")
+        
+        if Confirm.ask("Enter admin mode?", default=False):
+            settings_path = Path(__file__).parent / "config" / "settings.py"
+            admin = AdminMode(settings_path)
+            admin.run()
+            console.print("\n")
+        
+        # After admin mode (or if skipped), show available commands
+        console.print("Available commands:")
+        console.print("  [cyan]python main.py process[/cyan]      - Process paintings")
+        console.print("  [cyan]python main.py verify-config[/cyan] - Verify configuration")
+        console.print("  [cyan]python main.py admin[/cyan]         - Enter admin mode")
+        console.print("\nRun with --help for more information")
+
+
+@cli.command()
+def admin():
+    """Enter admin mode to edit configuration settings."""
+    settings_path = Path(__file__).parent / "config" / "settings.py"
+    admin_mode = AdminMode(settings_path)
+    admin_mode.run()
 
 
 @cli.command()
