@@ -162,6 +162,9 @@ def process_single_painting(
             return
     
     try:
+        # Import DIMENSION_UNIT from settings
+        from config.settings import DIMENSION_UNIT
+        
         # Step 1: Generate titles
         ui.print_info("Generating titles...")
         titles = analyzer.generate_titles(big_file)
@@ -170,32 +173,44 @@ def process_single_painting(
         selected_index = ui.select_title(titles)
         selected_title = titles[selected_index]
         
-        # Step 3: Get dimensions
-        ui.print_info("Extracting dimensions...")
-        dimensions = analyzer.get_image_dimensions(big_file)
-        ui.print_info(f"Detected dimensions: {dimensions}")
+        # Step 3: User inputs dimensions manually (width, height, depth)
+        width, height, depth, dimensions_formatted = ui.input_dimensions(unit=DIMENSION_UNIT)
         
-        # Step 4: User selects medium
+        # Step 4: User selects substrate
+        substrate = ui.select_substrate()
+        
+        # Step 5: User selects medium
         medium = ui.select_medium()
         
-        # Step 5: User inputs price
+        # Step 6: User selects subject
+        subject = ui.select_subject()
+        
+        # Step 7: User selects style
+        style = ui.select_style()
+        
+        # Step 8: User selects collection
+        collection = ui.select_collection()
+        
+        # Step 9: User inputs price
         price = ui.input_price(default=0.0)
         
-        # Step 6: Get creation date
+        # Step 10: Get creation date
         suggested_date = file_mgr.get_creation_date(big_file)
         creation_date = ui.input_creation_date(suggested_date)
         
-        # Step 7: Generate description
+        # Step 11: Generate description
         ui.print_info("Generating description...")
+        # Build full medium description for AI
+        full_medium = f"{medium} on {substrate}"
         description = analyzer.generate_description(
             big_file,
             selected_title,
-            medium,
-            dimensions,
+            full_medium,
+            dimensions_formatted,
             category,
         )
         
-        # Step 8: Rename files
+        # Step 12: Rename files
         ui.print_info("Renaming files...")
         sanitized_name = file_mgr.sanitize_filename(selected_title)
         new_big_path, new_instagram_path = file_mgr.rename_painting_pair(
@@ -205,7 +220,7 @@ def process_single_painting(
         )
         ui.print_success(f"Renamed to: {sanitized_name}{big_file.suffix}")
         
-        # Step 9: Create metadata
+        # Step 13: Create metadata
         metadata = metadata_mgr.create_metadata(
             filename_base=sanitized_name,
             category=category,
@@ -213,14 +228,22 @@ def process_single_painting(
             instagram_file_path=new_instagram_path,
             selected_title=selected_title,
             all_titles=titles,
-            description=description,
-            dimensions=dimensions,
+            description=description,  # Only once!
+            width=width,
+            height=height,
+            depth=depth,
+            dimension_unit=DIMENSION_UNIT,
+            dimensions_formatted=dimensions_formatted,
+            substrate=substrate,
             medium=medium,
+            subject=subject,
+            style=style,
+            collection=collection,
             price_eur=price,
             creation_date=creation_date,
         )
         
-        # Step 10: Save metadata files
+        # Step 14: Save metadata files
         json_path = metadata_mgr.save_metadata_json(metadata, category)
         txt_path = metadata_mgr.save_metadata_text(metadata, category)
         

@@ -11,7 +11,15 @@ from rich.prompt import Prompt, Confirm, IntPrompt, FloatPrompt
 from rich.table import Table
 from rich.panel import Panel
 
-from config.settings import MEDIUMS, CATEGORIES
+from config.settings import (
+    MEDIUMS,
+    CATEGORIES,
+    SUBSTRATES,
+    SUBJECTS,
+    STYLES,
+    COLLECTIONS,
+    DIMENSION_UNIT,
+)
 
 
 console = Console()
@@ -108,6 +116,32 @@ class CLIInterface:
         
         return choice - 1
     
+    def select_substrate(self) -> str:
+        """
+        Let user select substrate from predefined options.
+        
+        Returns:
+            Selected substrate
+        """
+        self.print_header("Select Substrate")
+        
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("No.", style="dim", width=6)
+        table.add_column("Substrate")
+        
+        for i, substrate in enumerate(SUBSTRATES, 1):
+            table.add_row(str(i), substrate)
+        
+        self.console.print(table)
+        
+        choice = IntPrompt.ask(
+            "\nSelect substrate number",
+            default=1,
+            choices=[str(i) for i in range(1, len(SUBSTRATES) + 1)],
+        )
+        
+        return SUBSTRATES[choice - 1]
+    
     def select_medium(self) -> str:
         """
         Let user select medium from predefined options.
@@ -134,6 +168,84 @@ class CLIInterface:
         
         return MEDIUMS[choice - 1]
     
+    def select_subject(self) -> str:
+        """
+        Let user select subject from predefined options.
+        
+        Returns:
+            Selected subject
+        """
+        self.print_header("Select Subject")
+        
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("No.", style="dim", width=6)
+        table.add_column("Subject")
+        
+        for i, subject in enumerate(SUBJECTS, 1):
+            table.add_row(str(i), subject)
+        
+        self.console.print(table)
+        
+        choice = IntPrompt.ask(
+            "\nSelect subject number",
+            default=1,
+            choices=[str(i) for i in range(1, len(SUBJECTS) + 1)],
+        )
+        
+        return SUBJECTS[choice - 1]
+    
+    def select_style(self) -> str:
+        """
+        Let user select style from predefined options.
+        
+        Returns:
+            Selected style
+        """
+        self.print_header("Select Style")
+        
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("No.", style="dim", width=6)
+        table.add_column("Style")
+        
+        for i, style in enumerate(STYLES, 1):
+            table.add_row(str(i), style)
+        
+        self.console.print(table)
+        
+        choice = IntPrompt.ask(
+            "\nSelect style number",
+            default=1,
+            choices=[str(i) for i in range(1, len(STYLES) + 1)],
+        )
+        
+        return STYLES[choice - 1]
+    
+    def select_collection(self) -> str:
+        """
+        Let user select collection from predefined options.
+        
+        Returns:
+            Selected collection
+        """
+        self.print_header("Select Collection")
+        
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("No.", style="dim", width=6)
+        table.add_column("Collection")
+        
+        for i, collection in enumerate(COLLECTIONS, 1):
+            table.add_row(str(i), collection)
+        
+        self.console.print(table)
+        
+        choice = IntPrompt.ask(
+            "\nSelect collection number",
+            default=1,
+            choices=[str(i) for i in range(1, len(COLLECTIONS) + 1)],
+        )
+        
+        return COLLECTIONS[choice - 1]
+    
     def input_price(self, default: float = 0.0) -> float:
         """
         Get price input from user.
@@ -148,6 +260,33 @@ class CLIInterface:
             "Enter price (EUR)",
             default=default,
         )
+    
+    def input_dimensions(self, unit: str = "cm") -> tuple:
+        """
+        Get width, height, and depth from user.
+        
+        Args:
+            unit: Unit of measurement ("cm" or "in")
+            
+        Returns:
+            Tuple of (width, height, depth, formatted_string)
+        """
+        from rich.prompt import FloatPrompt
+        
+        self.print_header(f"Enter Dimensions ({unit})")
+        
+        width = FloatPrompt.ask(f"Width ({unit})", default=0.0)
+        height = FloatPrompt.ask(f"Height ({unit})", default=0.0)
+        depth = FloatPrompt.ask(f"Depth ({unit}) - enter 0 for flat works", default=0.0)
+        
+        # Format the dimension string
+        if depth > 0:
+            formatted = f"{width}{unit} x {height}{unit} x {depth}{unit}"
+        else:
+            formatted = f"{width}{unit} x {height}{unit}"
+            depth = None  # Set to None for flat works
+        
+        return width, height, depth, formatted
     
     def input_creation_date(self, suggested_date: str) -> str:
         """

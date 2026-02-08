@@ -18,8 +18,65 @@ PAINTINGS_BIG_PATH = Path(os.getenv("PAINTINGS_BIG_PATH", "~/Pictures/my-paintin
 PAINTINGS_INSTAGRAM_PATH = Path(os.getenv("PAINTINGS_INSTAGRAM_PATH", "~/Pictures/my-paintings-instagram")).expanduser()
 METADATA_OUTPUT_PATH = Path(os.getenv("METADATA_OUTPUT_PATH", "~/Pictures/processed-metadata")).expanduser()
 
-# Extensible Categories
-# Add new categories here as needed
+# ============================================================================
+# MEASUREMENT UNITS
+# ============================================================================
+# Default unit for dimensions
+# Options: "cm" for centimeters or "in" for inches
+DIMENSION_UNIT = "cm"
+
+# ============================================================================
+# EXTENSIBLE ARTWORK METADATA FIELDS
+# Add new options to any of these lists as needed
+# ============================================================================
+
+# Substrate options
+SUBSTRATES = [
+    "paper",
+    "board",
+    "canvas",
+    "linen",
+]
+
+# Medium options
+MEDIUMS = [
+    "acrylic",
+    "oil",
+    "watercolor",
+    "pen and ink",
+    "pencil",
+]
+
+# Subject options
+SUBJECTS = [
+    "abstract",
+    "landscape",
+    "cityscape",
+    "sea beasties",
+    "fantasy",
+    "portrait",
+]
+
+# Style options
+STYLES = [
+    "abstract",
+    "figurative",
+    "surrealism",
+    "impressionism",
+    "landscape",
+    "cityscape",
+]
+
+# Collection options
+COLLECTIONS = [
+    "Sea Beasties from Titan",
+    "Fachwerkhauser",
+    "imaginary places",
+    "oils",
+    "abstracts",
+]
+
+# Extensible Categories (legacy - kept for backwards compatibility)
 CATEGORIES = [
     "abstract",
     "landscapes",
@@ -27,18 +84,6 @@ CATEGORIES = [
     "fantasy",
     "botanicals",
     "surreal",
-    # Add more as needed
-]
-
-# Extensible Medium Types
-# Add new mediums here as needed
-MEDIUMS = [
-    "Oil on canvas",
-    "Watercolor",
-    "Acrylic",
-    "Drawing",
-    "Woodblock print",
-    # Add more as needed
 ]
 
 # Image Processing Settings

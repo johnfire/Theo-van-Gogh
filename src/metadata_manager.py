@@ -28,8 +28,16 @@ class MetadataManager:
         selected_title: str,
         all_titles: List[str],
         description: str,
-        dimensions: str,
+        width: float,
+        height: float,
+        depth: float,
+        dimension_unit: str,
+        dimensions_formatted: str,
+        substrate: str,
         medium: str,
+        subject: str,
+        style: str,
+        collection: str,
         price_eur: float,
         creation_date: str,
     ) -> Dict[str, Any]:
@@ -44,8 +52,16 @@ class MetadataManager:
             selected_title: The title selected by user
             all_titles: All 5 generated title options
             description: Gallery description
-            dimensions: Dimensions string
-            medium: Medium used
+            width: Width value
+            height: Height value
+            depth: Depth value (None for flat works)
+            dimension_unit: Unit of measurement ("cm" or "in")
+            dimensions_formatted: Formatted dimensions string
+            substrate: Substrate used (paper, canvas, etc.)
+            medium: Medium used (oil, watercolor, etc.)
+            subject: Subject matter
+            style: Artistic style
+            collection: Collection name
             price_eur: Price in euros
             creation_date: Creation date
             
@@ -64,8 +80,18 @@ class MetadataManager:
                 "all_options": all_titles,
             },
             "description": description,
-            "dimensions": dimensions,
+            "dimensions": {
+                "width": width,
+                "height": height,
+                "depth": depth,
+                "unit": dimension_unit,
+                "formatted": dimensions_formatted,
+            },
+            "substrate": substrate,
             "medium": medium,
+            "subject": subject,
+            "style": style,
+            "collection": collection,
             "price_eur": price_eur,
             "creation_date": creation_date,
             "processed_date": datetime.now().isoformat(),
@@ -112,13 +138,31 @@ class MetadataManager:
         category_path.mkdir(parents=True, exist_ok=True)
         
         # Format text content
+        dims = metadata.get('dimensions', {})
+        if isinstance(dims, dict):
+            dimensions_str = dims.get('formatted', 'N/A')
+        else:
+            # Backward compatibility with old format
+            dimensions_str = dims
+        
         text_content = f"""ARTWORK METADATA
 {'=' * 60}
 
 Title: {metadata['title']['selected']}
 Category: {metadata['category']}
+Subject: {metadata.get('subject', 'N/A')}
+Style: {metadata.get('style', 'N/A')}
+Collection: {metadata.get('collection', 'N/A')}
+
+MATERIALS
+{'-' * 60}
+Substrate: {metadata.get('substrate', 'N/A')}
 Medium: {metadata['medium']}
-Dimensions: {metadata['dimensions']}
+
+DIMENSIONS
+{'-' * 60}
+{dimensions_str}
+
 Price: €{metadata['price_eur']}
 Creation Date: {metadata['creation_date']}
 
