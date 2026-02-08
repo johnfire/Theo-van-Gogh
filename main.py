@@ -41,6 +41,7 @@ def cli(ctx):
         console.print("  [cyan]python main.py process[/cyan]      - Process paintings")
         console.print("  [cyan]python main.py verify-config[/cyan] - Verify configuration")
         console.print("  [cyan]python main.py admin[/cyan]         - Enter admin mode")
+        console.print("  [cyan]python main.py nothing yet[/cyan]         - Enter nothing yet")
         console.print("\nRun with --help for more information")
 
 
