@@ -1,4 +1,31 @@
-# Art Processor - Changelog
+# Theo-van-Gogh - Changelog
+
+## v7 - Testing Infrastructure (2025-02-08)
+
+### Added
+- **pytest Testing Framework**: Complete test infrastructure with 26 initial tests
+- **Test Fixtures**: Comprehensive fixtures in conftest.py
+- **Test Markers**: Organized test categories (unit, integration, file_ops, cli, slow, api)
+- **Coverage Tracking**: pytest-cov integration with >70% target
+- **GitHub Actions CI/CD**: Automated testing pipeline
+  - Tests on Python 3.9, 3.10, 3.11, 3.12
+  - Linting, type checking, security scanning
+  - Coverage reporting
+  - Automatic builds
+
+### New Files
+- pytest.ini
+- requirements-dev.txt
+- TESTING.md
+- tests/__init__.py
+- tests/conftest.py
+- tests/test_file_manager.py
+- tests/test_upload_tracker.py
+- tests/test_file_organizer.py
+- .github/workflows/ci.yml
+
+---
+
 
 ## v6 - File Organization & Upload Tracking (2025-02-08)
 

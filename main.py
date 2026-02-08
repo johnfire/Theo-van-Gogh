@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Art Processor - Main CLI Entry Point
+Theo van Gogh Art Processor - Main CLI Entry Point
 Orchestrates the complete painting processing workflow.
 """
 
@@ -25,10 +25,10 @@ console = Console()
 @click.group(invoke_without_command=True)
 @click.pass_context
 def cli(ctx):
-    """Art Processor - Automated painting metadata generation and management."""
+    """Theo van gogh Art Processor - Automated painting metadata generation and management."""
     if ctx.invoked_subcommand is None:
         # Show admin mode option at startup
-        console.print("\n[bold cyan]Art Processor[/bold cyan]\n")
+        console.print("\n[bold cyan] Theo van Gogh Art Processor[/bold cyan]\n")
         
         if Confirm.ask("Enter admin mode?", default=False):
             settings_path = Path(__file__).parent / "config" / "settings.py"
