@@ -18,9 +18,9 @@ FASO_EMAIL = os.getenv("FASO_EMAIL", "xxxx")
 FASO_PASSWORD = os.getenv("FASO_PASSWORD", "xxxx")
 
 # File Paths
-PAINTINGS_BIG_PATH = Path(os.getenv("PAINTINGS_BIG_PATH", "~/Pictures/my-paintings-big")).expanduser()
-PAINTINGS_INSTAGRAM_PATH = Path(os.getenv("PAINTINGS_INSTAGRAM_PATH", "~/Pictures/my-paintings-instagram")).expanduser()
-METADATA_OUTPUT_PATH = Path(os.getenv("METADATA_OUTPUT_PATH", "~/Pictures/processed-metadata")).expanduser()
+PAINTINGS_BIG_PATH = Path(os.getenv("PAINTINGS_BIG_PATH", "~/ai-workzone/my-paintings-big")).expanduser()
+PAINTINGS_INSTAGRAM_PATH = Path(os.getenv("PAINTINGS_INSTAGRAM_PATH", "~/ai-workzone/my-paintings-instagram")).expanduser()
+METADATA_OUTPUT_PATH = Path(os.getenv("METADATA_OUTPUT_PATH", "~/ai-workzone/processed-metadata")).expanduser()
 
 # ============================================================================
 # MEASUREMENT UNITS
