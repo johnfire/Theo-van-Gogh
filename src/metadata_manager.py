@@ -198,6 +198,59 @@ Analyzed From: {metadata['analyzed_from']}
         
         return txt_path
     
+    def create_skeleton_metadata(
+        self,
+        filename_base: str,
+        category: str,
+        title: str,
+        big_file_paths: List[Path],
+    ) -> Dict[str, Any]:
+        """
+        Create a skeleton metadata dictionary from filename info only.
+        Unknown fields are set to None.
+
+        Args:
+            filename_base: Base filename (e.g., 'black_palm')
+            category: Category/subfolder name
+            title: Title derived from filename (e.g., 'Black Palm')
+            big_file_paths: List of paths to big versions
+
+        Returns:
+            Skeleton metadata dictionary
+        """
+        metadata = {
+            "filename_base": filename_base,
+            "category": category,
+            "files": {
+                "big": [str(p) for p in sorted(big_file_paths, key=lambda p: p.name.lower())],
+                "instagram": None,
+            },
+            "title": {
+                "selected": title,
+                "all_options": [],
+            },
+            "description": None,
+            "dimensions": {
+                "width": None,
+                "height": None,
+                "depth": None,
+                "unit": None,
+                "formatted": None,
+            },
+            "substrate": None,
+            "medium": None,
+            "subject": None,
+            "style": None,
+            "collection": None,
+            "price_eur": None,
+            "creation_date": None,
+            "processed_date": datetime.now().isoformat(),
+            "analyzed_from": None,
+            "is_skeleton": True,
+        }
+
+        return metadata
+
     def load_metadata(self, category: str, filename_base: str) -> Dict[str, Any]:
         """
         Load existing metadata from JSON file.

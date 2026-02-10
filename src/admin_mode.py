@@ -29,7 +29,7 @@ class AdminMode:
             self.show_main_menu()
             choice = IntPrompt.ask(
                 "\nSelect option",
-                choices=["1", "2", "3", "4", "5", "6", "7", "0"],
+                choices=["1", "2", "3", "4", "5", "6", "7", "8", "0"],
                 default="0"
             )
             
@@ -50,6 +50,8 @@ class AdminMode:
                 self.sync_collection_folders()
             elif choice == 7:
                 self.view_current_settings()
+            elif choice == 8:
+                self.generate_skeleton_metadata()
     
     def show_main_menu(self):
         """Display the main admin menu."""
@@ -66,6 +68,7 @@ class AdminMode:
         table.add_row("5", "Manage Social Media Platforms")
         table.add_row("6", "Sync Collection Folders")
         table.add_row("7", "View Current Settings")
+        table.add_row("8", "Generate Skeleton Metadata")
         table.add_row("0", "Exit Admin Mode")
         
         self.console.print(table)
@@ -364,7 +367,20 @@ class AdminMode:
         if result['errors']:
             self.console.print(f"[red]Errors: {len(result['errors'])}[/red]")
         
-        input("\nPress Enter to continue...")
+        Prompt.ask("\nPress Enter to continue")
 
-        
+    def generate_skeleton_metadata(self):
+        """Generate skeleton metadata files for all painting folders."""
+        from src.skeleton_metadata_generator import generate_skeleton_metadata_cli
+
+        self.console.print("\n[bold]Generate Skeleton Metadata[/bold]")
+        self.console.print(
+            "[dim]Scans painting folders and creates stub metadata files[/dim]\n"
+        )
+
+        if not Confirm.ask("Proceed with scan?", default=True):
+            return
+
+        generate_skeleton_metadata_cli()
+
         Prompt.ask("\nPress Enter to continue")
