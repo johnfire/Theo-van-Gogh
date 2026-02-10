@@ -272,7 +272,9 @@ Use admin mode option 5 to register new platforms (Instagram, Mastodon, etc.) in
 
 ## License
 
-Private project for Christopher Rehm's art management workflow.
+Private project for Christopher Rehm's art management workflow. 
+You may use this software for personal use, modify it for personal use,share with others, but you may not sell the code in this project.
+https://creativecommons.org/licenses/by-nc-sa/4.0/
 
 ## Links
 
