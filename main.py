@@ -42,6 +42,9 @@ def cli(ctx):
         console.print("  [cyan]python main.py verify-config[/cyan] - Verify configuration")
         console.print("  [cyan]python main.py admin[/cyan]         - Enter admin mode")
         console.print("  [cyan]python main.py upload-faso[/cyan]   - Upload to FASO")
+        console.print("  [cyan]python main.py post-social[/cyan]  - Post to social media")
+        console.print("  [cyan]python main.py schedule-post[/cyan] - Schedule a post")
+        console.print("  [cyan]python main.py check-schedule[/cyan] - Run scheduled posts")
         console.print("\nRun with --help for more information")
 
 
@@ -457,6 +460,53 @@ def upload_faso():
         ui.print_error(f"Error: {e}")
         import traceback
         traceback.print_exc()
+
+
+@cli.command()
+def post_social():
+    """Post artwork to social media platforms."""
+    from src.social.cli import post_social_cli
+
+    ui = CLIInterface()
+    ui.print_header("Social Media Post")
+
+    try:
+        post_social_cli()
+    except KeyboardInterrupt:
+        ui.print_warning("\nPosting interrupted by user")
+    except Exception as e:
+        ui.print_error(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+@cli.command()
+def schedule_post():
+    """Schedule a future social media post."""
+    from src.social.cli import schedule_post_cli
+
+    ui = CLIInterface()
+    ui.print_header("Schedule Post")
+
+    try:
+        schedule_post_cli()
+    except KeyboardInterrupt:
+        ui.print_warning("\nScheduling interrupted by user")
+    except Exception as e:
+        ui.print_error(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+@cli.command()
+def check_schedule():
+    """Execute pending scheduled posts (designed for cron job)."""
+    from src.social.cli import check_schedule_cli
+
+    try:
+        check_schedule_cli()
+    except Exception as e:
+        console.print(f"[red]Schedule check error: {e}[/red]")
 
 
 if __name__ == '__main__':

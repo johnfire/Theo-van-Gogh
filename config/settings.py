@@ -17,6 +17,13 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "xxx")
 FASO_EMAIL = os.getenv("FASO_EMAIL", "xxx")
 FASO_PASSWORD = os.getenv("FASO_PASSWORD", "xxx")
 
+# Mastodon Configuration
+MASTODON_INSTANCE_URL = os.getenv("MASTODON_INSTANCE_URL", "")
+MASTODON_ACCESS_TOKEN = os.getenv("MASTODON_ACCESS_TOKEN", "")
+
+# Social Media
+SOCIAL_MEDIA_WEBSITE = "artbychristopherrehm.com"
+
 # ============================================================================
 # BASE FILE PATHS
 # ============================================================================
@@ -33,6 +40,12 @@ METADATA_OUTPUT_PATH = Path(os.getenv("METADATA_OUTPUT_PATH", "~/ai-workzone/pro
 # Upload tracking
 UPLOAD_TRACKER_PATH = METADATA_OUTPUT_PATH / "upload_status.json"
 
+# Schedule file for social media posts
+SCHEDULE_PATH = METADATA_OUTPUT_PATH / "schedule.json"
+
+# Videos
+VIDEOS_PATH = Path(os.getenv("VIDEOS_PATH", "~/ai-workzone/videos")).expanduser()
+
 # Browser cookies and session files
 COOKIES_DIR = Path(os.getenv("COOKIES_DIR", "~/.config/theo-van-gogh/cookies")).expanduser()
 FASO_COOKIES_PATH = COOKIES_DIR / "faso_cookies.json"
@@ -44,7 +57,7 @@ SCREENSHOTS_DIR = DEBUG_DIR / "screenshots"
 LOGS_DIR = DEBUG_DIR / "logs"
 
 # Ensure all directories exist
-for directory in [METADATA_OUTPUT_PATH, COOKIES_DIR, DEBUG_DIR, SCREENSHOTS_DIR, LOGS_DIR]:
+for directory in [METADATA_OUTPUT_PATH, COOKIES_DIR, DEBUG_DIR, SCREENSHOTS_DIR, LOGS_DIR, VIDEOS_PATH]:
     directory.mkdir(parents=True, exist_ok=True)
 
 # ============================================================================

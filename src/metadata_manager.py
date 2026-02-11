@@ -98,8 +98,10 @@ class MetadataManager:
             "creation_date": creation_date,
             "processed_date": datetime.now().isoformat(),
             "analyzed_from": analyzed_from,
+            "gallery_sites": self._empty_gallery_sites(),
+            "social_media": self._empty_social_media(),
         }
-        
+
         return metadata
     
     def save_metadata_json(self, metadata: Dict[str, Any], category: str) -> Path:
@@ -247,6 +249,8 @@ Analyzed From: {metadata['analyzed_from']}
             "processed_date": datetime.now().isoformat(),
             "analyzed_from": None,
             "is_skeleton": True,
+            "gallery_sites": self._empty_gallery_sites(),
+            "social_media": self._empty_social_media(),
         }
 
         return metadata
@@ -270,6 +274,18 @@ Analyzed From: {metadata['analyzed_from']}
         with open(json_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     
+    @staticmethod
+    def _empty_gallery_sites() -> dict:
+        """Return default gallery_sites tracking dict."""
+        from src.galleries.base import empty_gallery_sites_dict
+        return empty_gallery_sites_dict()
+
+    @staticmethod
+    def _empty_social_media() -> dict:
+        """Return default social_media tracking dict."""
+        from src.social.base import empty_social_media_dict
+        return empty_social_media_dict()
+
     def metadata_exists(self, category: str, filename_base: str) -> bool:
         """
         Check if metadata already exists for a file.

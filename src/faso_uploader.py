@@ -508,38 +508,69 @@ async def _do_uploads(
     return succeeded, failed
 
 
+def _find_all_metadata_files() -> list:
+    """Scan processed-metadata for all JSON metadata files."""
+    from config.settings import METADATA_OUTPUT_PATH
+    results = []
+    for json_file in METADATA_OUTPUT_PATH.rglob("*.json"):
+        if json_file.name in ("upload_status.json", "schedule.json"):
+            continue
+        try:
+            with open(json_file, "r") as f:
+                metadata = json.load(f)
+            # Must have a filename_base to be a painting metadata file
+            if "filename_base" in metadata:
+                results.append((json_file, metadata))
+        except (json.JSONDecodeError, KeyError):
+            continue
+    return results
+
+
+def _is_faso_pending(metadata: dict) -> bool:
+    """Check if a painting has not been uploaded to FASO."""
+    gallery_sites = metadata.get("gallery_sites", {})
+    faso = gallery_sites.get("faso", {})
+    return faso.get("last_uploaded") is None
+
+
+def _mark_faso_uploaded(metadata_path: Path, metadata: dict):
+    """Update gallery_sites.faso.last_uploaded in metadata JSON."""
+    if "gallery_sites" not in metadata:
+        from src.galleries.base import empty_gallery_sites_dict
+        metadata["gallery_sites"] = empty_gallery_sites_dict()
+    if "faso" not in metadata["gallery_sites"]:
+        from src.galleries.base import default_gallery_entry
+        metadata["gallery_sites"]["faso"] = default_gallery_entry()
+
+    metadata["gallery_sites"]["faso"]["last_uploaded"] = datetime.now().isoformat()
+
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f, indent=2, ensure_ascii=False)
+
+
 def upload_faso_cli():
     """CLI entry point for FASO upload. Called from admin mode or CLI command."""
-    from src.upload_tracker import UploadTracker
-    from config.settings import UPLOAD_TRACKER_PATH
-
-    # Load tracker and get pending FASO uploads
-    tracker = UploadTracker(UPLOAD_TRACKER_PATH)
-    pending = tracker.get_pending_uploads("FASO")
+    # Scan all metadata files for pending FASO uploads
+    all_metadata = _find_all_metadata_files()
+    pending = [
+        (path, meta) for path, meta in all_metadata
+        if _is_faso_pending(meta)
+    ]
 
     if not pending:
         console.print("[yellow]No paintings pending FASO upload.[/yellow]")
         return
 
-    # Load metadata for each pending painting and check readiness
+    # Check readiness of each pending painting
     ready_paintings = []
     not_ready = []
 
-    for filename in pending:
-        painting_data = tracker.data["paintings"][filename]
-        metadata_path = painting_data.get("metadata_path")
-
-        if not metadata_path or not Path(metadata_path).exists():
-            not_ready.append((filename, ["metadata file not found"]))
-            continue
-
+    for metadata_path, metadata in pending:
+        filename = metadata.get("filename_base", metadata_path.stem)
         try:
-            with open(metadata_path, 'r') as f:
-                metadata = json.load(f)
-
             is_ready, missing = FASOUploader.is_upload_ready(metadata)
             if is_ready:
-                ready_paintings.append((filename, metadata))
+                ready_paintings.append((filename, metadata, metadata_path))
             else:
                 not_ready.append((filename, missing))
         except Exception as e:
@@ -551,7 +582,7 @@ def upload_faso_cli():
     table.add_column("Title")
     table.add_column("Status")
 
-    for i, (filename, metadata) in enumerate(ready_paintings, 1):
+    for i, (filename, metadata, _) in enumerate(ready_paintings, 1):
         title = metadata.get("title", {}).get("selected", filename)
         table.add_row(str(i), title, "[green]Ready[/green]")
 
@@ -597,9 +628,10 @@ def upload_faso_cli():
         ):
             return
 
-    # Run async uploads
+    # Run async uploads (pass (filename, metadata) pairs)
+    upload_pairs = [(fn, meta) for fn, meta, _ in to_upload]
     console.print("\n[cyan]Starting browser for upload...[/cyan]")
-    succeeded, failed = asyncio.run(_do_uploads(to_upload))
+    succeeded, failed = asyncio.run(_do_uploads(upload_pairs))
 
     # Summary
     console.print(f"\n[bold]Upload Results:[/bold]")
@@ -612,10 +644,16 @@ def upload_faso_cli():
         console.print(f"\n[bold]Mark uploads as complete?[/bold]")
         console.print("[dim]You can re-upload later if you don't mark them now.[/dim]")
 
+        # Build lookup from filename to metadata_path
+        path_lookup = {fn: mp for fn, _, mp in to_upload}
+
         for filename in succeeded:
-            title = tracker.data["paintings"][filename].get("metadata_path", filename)
             if Confirm.ask(f"  Mark '{filename}' as uploaded?", default=True):
-                tracker.mark_uploaded(filename, "FASO")
+                mp = path_lookup.get(filename)
+                if mp:
+                    with open(mp, "r") as f:
+                        meta = json.load(f)
+                    _mark_faso_uploaded(mp, meta)
                 console.print(f"    [green]Marked done[/green]")
             else:
                 console.print(f"    [yellow]Kept pending (can re-upload)[/yellow]")

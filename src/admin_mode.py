@@ -29,7 +29,7 @@ class AdminMode:
             self.show_main_menu()
             choice = IntPrompt.ask(
                 "\nSelect option",
-                choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "0"],
+                choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "0"],
                 default="0"
             )
             
@@ -60,6 +60,14 @@ class AdminMode:
                 self.upload_to_faso()
             elif choice == 12:
                 self.find_painting()
+            elif choice == 13:
+                self.post_to_social_media()
+            elif choice == 14:
+                self.schedule_posts()
+            elif choice == 15:
+                self.view_schedule()
+            elif choice == 16:
+                self.migrate_tracking()
     
     def show_main_menu(self):
         """Display the main admin menu."""
@@ -81,6 +89,10 @@ class AdminMode:
         table.add_row("10", "Sync Instagram Folders")
         table.add_row("11", "Upload to FASO")
         table.add_row("12", "Find Painting")
+        table.add_row("13", "Post to Social Media")
+        table.add_row("14", "Schedule Posts")
+        table.add_row("15", "View Schedule")
+        table.add_row("16", "Migrate Tracking Data")
         table.add_row("0", "Exit Admin Mode")
         
         self.console.print(table)
@@ -480,6 +492,55 @@ class AdminMode:
 
             self.console.print(table)
             self.console.print(f"\n[dim]{len(results)} file(s) found[/dim]")
+
+        Prompt.ask("\nPress Enter to continue")
+
+    def post_to_social_media(self):
+        """Post artwork to social media platforms."""
+        from src.social.cli import post_social_cli
+
+        self.console.print("\n[bold]Post to Social Media[/bold]")
+        self.console.print("[dim]Post artwork to your social media accounts[/dim]\n")
+
+        post_social_cli()
+
+        Prompt.ask("\nPress Enter to continue")
+
+    def schedule_posts(self):
+        """Schedule future social media posts."""
+        from src.social.cli import schedule_post_cli
+
+        self.console.print("\n[bold]Schedule Posts[/bold]")
+        self.console.print("[dim]Schedule artwork posts for specific dates and times[/dim]\n")
+
+        schedule_post_cli()
+
+        Prompt.ask("\nPress Enter to continue")
+
+    def view_schedule(self):
+        """View upcoming and past scheduled posts."""
+        from src.social.cli import view_schedule_cli
+
+        self.console.print("\n[bold]Post Schedule[/bold]")
+        self.console.print("[dim]View upcoming and past scheduled posts[/dim]\n")
+
+        view_schedule_cli()
+
+        Prompt.ask("\nPress Enter to continue")
+
+    def migrate_tracking(self):
+        """Migrate upload_status.json to metadata-based tracking."""
+        from src.migrate_tracking import migrate
+
+        self.console.print("\n[bold]Migrate Tracking Data[/bold]")
+        self.console.print(
+            "[dim]Moves upload tracking from upload_status.json into each painting's metadata[/dim]\n"
+        )
+
+        if not Confirm.ask("Run migration?", default=True):
+            return
+
+        migrate()
 
         Prompt.ask("\nPress Enter to continue")
 
