@@ -29,7 +29,7 @@ class AdminMode:
             self.show_main_menu()
             choice = IntPrompt.ask(
                 "\nSelect option",
-                choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "0"],
+                choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "0"],
                 default="0"
             )
             
@@ -56,6 +56,8 @@ class AdminMode:
                 self.edit_metadata()
             elif choice == 10:
                 self.sync_instagram_folders()
+            elif choice == 11:
+                self.upload_to_faso()
     
     def show_main_menu(self):
         """Display the main admin menu."""
@@ -75,6 +77,7 @@ class AdminMode:
         table.add_row("8", "Generate Skeleton Metadata")
         table.add_row("9", "Edit Metadata")
         table.add_row("10", "Sync Instagram Folders")
+        table.add_row("11", "Upload to FASO")
         table.add_row("0", "Exit Admin Mode")
         
         self.console.print(table)
@@ -414,5 +417,18 @@ class AdminMode:
         )
 
         sync_instagram_folders_cli()
+
+        Prompt.ask("\nPress Enter to continue")
+
+    def upload_to_faso(self):
+        """Upload artwork to FASO website."""
+        from src.faso_uploader import upload_faso_cli
+
+        self.console.print("\n[bold]Upload to FASO[/bold]")
+        self.console.print(
+            "[dim]Upload paintings to Fine Art Studio Online[/dim]\n"
+        )
+
+        upload_faso_cli()
 
         Prompt.ask("\nPress Enter to continue")

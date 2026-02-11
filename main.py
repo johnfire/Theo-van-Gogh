@@ -41,6 +41,7 @@ def cli(ctx):
         console.print("  [cyan]python main.py process[/cyan]      - Process paintings")
         console.print("  [cyan]python main.py verify-config[/cyan] - Verify configuration")
         console.print("  [cyan]python main.py admin[/cyan]         - Enter admin mode")
+        console.print("  [cyan]python main.py upload-faso[/cyan]   - Upload to FASO")
         console.print("\nRun with --help for more information")
 
 
@@ -438,6 +439,24 @@ def verify_config_old():
     else:
         ui.print_error("Anthropic API key: NOT configured")
         ui.print_info("Set ANTHROPIC_API_KEY in your .env file")
+
+
+@cli.command()
+def upload_faso():
+    """Upload artwork to FASO (Fine Art Studio Online)."""
+    from src.faso_uploader import upload_faso_cli
+
+    ui = CLIInterface()
+    ui.print_header("FASO Upload")
+
+    try:
+        upload_faso_cli()
+    except KeyboardInterrupt:
+        ui.print_warning("\nUpload interrupted by user")
+    except Exception as e:
+        ui.print_error(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == '__main__':
