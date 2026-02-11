@@ -133,11 +133,11 @@ class FASOUploader:
         """Click 'Upload Art Now' to get to the upload page."""
         try:
             # Go to dashboard first (in case we're on another page)
-            await self.page.goto('https://data.fineartstudioonline.com/')
+            await self.page.goto('https://data.fineartstudioonline.com/cfgeditwebsite.asp?new_login=y&faso_com_auth=y')
             await self.page.wait_for_load_state('networkidle')
 
             upload_btn = await self.page.wait_for_selector(
-                'a:has-text("Upload Art Now")', timeout=5000
+                'a.tb_link:has(img[src*="upload_2"])', timeout=30000
             )
             await upload_btn.click()
             await self.page.wait_for_load_state('networkidle')
@@ -170,7 +170,7 @@ class FASOUploader:
 
             # Click the Upload confirmation button
             upload_btn = await self.page.wait_for_selector(
-                'button:has-text("Upload"), input[value="Upload"]', timeout=5000
+                'span[data-e2e="upload"]', timeout=5000
             )
             await upload_btn.click()
 
@@ -219,20 +219,20 @@ class FASOUploader:
             if title:
                 await self._fill_text_field('input[name="Title"]', title)
 
-            # Collection dropdown
+            # Collection dropdown (fuzzy match - metadata format may differ from FASO)
             collection = metadata.get("collection")
             if collection:
-                await self._select_dropdown('select[name="Collection"]', collection)
+                await self._select_dropdown_fuzzy('select[name="Collection"]', collection)
 
             # Medium dropdown
             medium = metadata.get("medium")
             if medium:
-                await self._select_dropdown('select[name="Medium"]', medium)
+                await self._select_dropdown_fuzzy('select[name="Medium"]', medium)
 
             # Substrate dropdown
             substrate = metadata.get("substrate")
             if substrate:
-                await self._select_dropdown('select[name="Substrate"]', substrate)
+                await self._select_dropdown_fuzzy('select[name="Substrate"]', substrate)
 
             # Dimensions - VerticalSize = height, HorizontalSize = width
             dims = metadata.get("dimensions", {})
@@ -262,12 +262,12 @@ class FASOUploader:
             # Subject dropdown
             subject = metadata.get("subject")
             if subject:
-                await self._select_dropdown('select[name="Subject"]', subject)
+                await self._select_dropdown_fuzzy('select[name="Subject"]', subject)
 
             # Style dropdown
             style = metadata.get("style")
             if style:
-                await self._select_dropdown('select[name="Style"]', style)
+                await self._select_dropdown_fuzzy('select[name="Style"]', style)
 
             # RetailPrice
             price = metadata.get("price_eur")
@@ -275,6 +275,9 @@ class FASOUploader:
                 await self._fill_text_field(
                     'input[name="RetailPrice"]', str(int(price))
                 )
+
+            # Availability - always set to Available
+            await self._select_dropdown('select[name="Availability"]', 'Available')
 
             # Description (rich text editor)
             description = metadata.get("description")
@@ -293,8 +296,7 @@ class FASOUploader:
         """Click Save Changes."""
         try:
             save_btn = await self.page.wait_for_selector(
-                'input[value="Save Changes"], button:has-text("Save Changes"), '
-                'a:has-text("Save Changes")',
+                'input[value*="Save Changes"]',
                 timeout=5000
             )
             await save_btn.click()
@@ -321,42 +323,55 @@ class FASOUploader:
         try:
             await self.page.select_option(selector, label=value)
         except Exception as e:
-            # If exact match fails, try to find a close match
             console.print(
                 f"[yellow]Warning: could not select '{value}' in {selector}: {e}[/yellow]"
             )
 
+    async def _select_dropdown_fuzzy(self, selector: str, value: str):
+        """Select a dropdown option by fuzzy matching (normalizes punctuation)."""
+        try:
+            # First try exact match
+            await self.page.select_option(selector, label=value)
+            return
+        except Exception:
+            pass
+
+        # Get all option labels and find best fuzzy match
+        try:
+            options = await self.page.eval_on_selector_all(
+                f'{selector} option',
+                'els => els.map(e => e.textContent.trim())'
+            )
+            normalized = self._normalize_for_match(value)
+            for option in options:
+                if option and self._normalize_for_match(option) == normalized:
+                    await self.page.select_option(selector, label=option)
+                    console.print(f"[green]Matched '{value}' → '{option}'[/green]")
+                    return
+            console.print(
+                f"[yellow]Warning: no match for '{value}' in {selector}[/yellow]"
+            )
+        except Exception as e:
+            console.print(
+                f"[yellow]Warning: fuzzy select failed for '{value}': {e}[/yellow]"
+            )
+
+    @staticmethod
+    def _normalize_for_match(text: str) -> str:
+        """Normalize text for fuzzy dropdown matching."""
+        # Replace punctuation with spaces, collapse whitespace, lowercase
+        return re.sub(r'[^a-z0-9]+', ' ', text.lower()).strip()
+
     async def _fill_description(self, description: str):
-        """Fill the rich text description editor."""
+        """Fill the rich text description editor (TinyMCE with textarea fallback)."""
         html_content = self.markdown_to_html(description)
 
         try:
-            # Strategy 1: Click HTML toggle button, paste into textarea
-            html_toggle = await self.page.query_selector(
-                'a:has-text("HTML"), button:has-text("HTML")'
-            )
-            if html_toggle:
-                await html_toggle.click()
-                await asyncio.sleep(1)
-                # Look for a textarea that appeared
-                textarea = await self.page.query_selector(
-                    'textarea[class*="html"], textarea[id*="Description"], '
-                    'textarea.mce-textbox'
-                )
-                if textarea:
-                    await textarea.fill(html_content)
-                    console.print("[green]Description filled via HTML mode[/green]")
-                    return
-
-            # Strategy 2: Use TinyMCE JavaScript API
+            # Strategy 1: Use TinyMCE JavaScript API (editor is id=Description_ifr)
             result = await self.page.evaluate(f'''
                 () => {{
-                    if (typeof tinymce !== 'undefined' && tinymce.activeEditor) {{
-                        tinymce.activeEditor.setContent({json.dumps(html_content)});
-                        return true;
-                    }}
-                    if (typeof tinyMCE !== 'undefined' && tinyMCE.activeEditor) {{
-                        tinyMCE.activeEditor.setContent({json.dumps(html_content)});
+                    if (typeof tinymce !== 'undefined' && tinymce.get("Description")) {{
+                        tinymce.get("Description").setContent({json.dumps(html_content)});
                         return true;
                     }}
                     return false;
@@ -366,27 +381,22 @@ class FASOUploader:
                 console.print("[green]Description filled via TinyMCE API[/green]")
                 return
 
-            # Strategy 3: Direct iframe injection
-            iframes = await self.page.query_selector_all('iframe')
-            for iframe in iframes:
-                iframe_id = await iframe.get_attribute('id') or ''
-                if 'description' in iframe_id.lower() or 'editor' in iframe_id.lower() or 'mce' in iframe_id.lower():
-                    frame = await iframe.content_frame()
-                    if frame:
-                        await frame.evaluate(
-                            f'document.body.innerHTML = {json.dumps(html_content)}'
-                        )
-                        console.print("[green]Description filled via iframe[/green]")
-                        return
+            # Strategy 2: Fill the underlying textarea directly
+            textarea = await self.page.query_selector('textarea[name="Description"]')
+            if textarea:
+                await textarea.fill(html_content)
+                console.print("[green]Description filled via textarea[/green]")
+                return
 
-            # Strategy 4: Try any iframe
-            if iframes:
-                frame = await iframes[0].content_frame()
+            # Strategy 3: Write into the TinyMCE iframe body
+            iframe = await self.page.query_selector('iframe#Description_ifr')
+            if iframe:
+                frame = await iframe.content_frame()
                 if frame:
                     await frame.evaluate(
                         f'document.body.innerHTML = {json.dumps(html_content)}'
                     )
-                    console.print("[green]Description filled via first iframe[/green]")
+                    console.print("[green]Description filled via iframe[/green]")
                     return
 
             console.print("[yellow]Warning: could not fill description field[/yellow]")
@@ -473,29 +483,28 @@ class FASOUploader:
 
 async def _do_uploads(
     paintings: List[Tuple[str, Dict[str, Any]]],
-    tracker,
-) -> Dict[str, int]:
-    """Run the actual browser uploads."""
-    results = {"success": 0, "failed": 0}
+) -> Tuple[List[str], List[str]]:
+    """Run the actual browser uploads. Returns (succeeded_filenames, failed_filenames)."""
+    succeeded = []
+    failed = []
 
     async with FASOUploader(headless=False) as uploader:
         if not await uploader.start_browser():
-            return results
+            return succeeded, failed
 
         for filename, metadata in paintings:
             success = await uploader.upload_painting(metadata)
 
             if success:
-                tracker.mark_uploaded(filename, "FASO")
-                results["success"] += 1
+                succeeded.append(filename)
             else:
-                results["failed"] += 1
+                failed.append(filename)
 
             # Small delay between uploads
             if paintings.index((filename, metadata)) < len(paintings) - 1:
                 await asyncio.sleep(2)
 
-    return results
+    return succeeded, failed
 
 
 def upload_faso_cli():
@@ -589,10 +598,23 @@ def upload_faso_cli():
 
     # Run async uploads
     console.print("\n[cyan]Starting browser for upload...[/cyan]")
-    results = asyncio.run(_do_uploads(to_upload, tracker))
+    succeeded, failed = asyncio.run(_do_uploads(to_upload))
 
     # Summary
     console.print(f"\n[bold]Upload Results:[/bold]")
-    console.print(f"  Succeeded: [green]{results['success']}[/green]")
-    if results['failed'] > 0:
-        console.print(f"  Failed: [red]{results['failed']}[/red]")
+    console.print(f"  Succeeded: [green]{len(succeeded)}[/green]")
+    if failed:
+        console.print(f"  Failed: [red]{len(failed)}[/red]")
+
+    # Ask user which to mark as done
+    if succeeded:
+        console.print(f"\n[bold]Mark uploads as complete?[/bold]")
+        console.print("[dim]You can re-upload later if you don't mark them now.[/dim]")
+
+        for filename in succeeded:
+            title = tracker.data["paintings"][filename].get("metadata_path", filename)
+            if Confirm.ask(f"  Mark '{filename}' as uploaded?", default=True):
+                tracker.mark_uploaded(filename, "FASO")
+                console.print(f"    [green]Marked done[/green]")
+            else:
+                console.print(f"    [yellow]Kept pending (can re-upload)[/yellow]")

@@ -73,7 +73,7 @@ async def explore():
         # Step 2: Click "Upload Art Now"
         console.print("\n[cyan]Clicking 'Upload Art Now'...[/cyan]")
         try:
-            upload_btn = await page.wait_for_selector('a:has-text("Upload Art Now")', timeout=30000)
+            upload_btn = await page.wait_for_selector('a.tb_link:has(img[src*="upload_2"])', timeout=30000)
             await upload_btn.click()
             await page.wait_for_load_state('networkidle')
             await asyncio.sleep(2)
@@ -105,7 +105,7 @@ async def explore():
             console.print(f"[green]Screenshot: {screenshot_path}[/green]")
 
             console.print("[cyan]Clicking Upload button...[/cyan]")
-            upload_confirm = await page.wait_for_selector('button:has-text("Upload"), input[value="Upload"]', timeout=5000)
+            upload_confirm = await page.wait_for_selector('span[data-e2e="upload"]', timeout=5000)
             await upload_confirm.click()
 
             console.print("[cyan]Waiting for upload to complete...[/cyan]")
