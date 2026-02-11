@@ -29,7 +29,7 @@ class AdminMode:
             self.show_main_menu()
             choice = IntPrompt.ask(
                 "\nSelect option",
-                choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "0"],
+                choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "0"],
                 default="0"
             )
             
@@ -58,6 +58,8 @@ class AdminMode:
                 self.sync_instagram_folders()
             elif choice == 11:
                 self.upload_to_faso()
+            elif choice == 12:
+                self.find_painting()
     
     def show_main_menu(self):
         """Display the main admin menu."""
@@ -78,6 +80,7 @@ class AdminMode:
         table.add_row("9", "Edit Metadata")
         table.add_row("10", "Sync Instagram Folders")
         table.add_row("11", "Upload to FASO")
+        table.add_row("12", "Find Painting")
         table.add_row("0", "Exit Admin Mode")
         
         self.console.print(table)
@@ -432,3 +435,69 @@ class AdminMode:
         upload_faso_cli()
 
         Prompt.ask("\nPress Enter to continue")
+
+    def find_painting(self):
+        """Find a painting by name across paintings directories."""
+        from config.settings import PAINTINGS_BIG_PATH, PAINTINGS_INSTAGRAM_PATH
+
+        self.console.print("\n[bold]Find Painting[/bold]")
+        self.console.print(
+            "[dim]Search for a painting by name in paintings folders[/dim]\n"
+        )
+
+        query = Prompt.ask("Painting name")
+        if not query.strip():
+            return
+
+        # Normalize query: lowercase, replace separators with spaces, strip trailing numbers
+        normalized_query = self._normalize_painting_name(query)
+
+        results = []
+        search_dirs = [
+            ("paintings-big", PAINTINGS_BIG_PATH),
+            ("paintings-instagram", PAINTINGS_INSTAGRAM_PATH),
+        ]
+
+        for label, base_path in search_dirs:
+            if not base_path.exists():
+                continue
+            for filepath in base_path.rglob("*"):
+                if not filepath.is_file():
+                    continue
+                normalized_file = self._normalize_painting_name(filepath.stem)
+                if normalized_query in normalized_file:
+                    results.append((label, filepath))
+
+        if not results:
+            self.console.print(f"[yellow]No matches found for '{query}'[/yellow]")
+        else:
+            table = Table(title=f"Results for '{query}'")
+            table.add_column("Location", style="cyan")
+            table.add_column("Path")
+
+            for label, filepath in sorted(results, key=lambda r: r[1].name):
+                table.add_row(label, str(filepath))
+
+            self.console.print(table)
+            self.console.print(f"\n[dim]{len(results)} file(s) found[/dim]")
+
+        Prompt.ask("\nPress Enter to continue")
+
+    @staticmethod
+    def _normalize_painting_name(name: str) -> str:
+        """Normalize a painting name for fuzzy searching.
+        Strips trailing numbers, replaces dashes/underscores with spaces, lowercases.
+        """
+        # Remove file extension if present
+        name = Path(name).stem if '.' in name else name
+        # Lowercase
+        name = name.lower()
+        # Replace dashes and underscores with spaces
+        name = name.replace('-', ' ').replace('_', ' ')
+        # Strip trailing numbers (e.g., "black palm 1" -> "black palm")
+        name = re.sub(r'\s+\d+\s*$', '', name)
+        # Also strip trailing letter+number combos like A4, A14
+        name = re.sub(r'\s+[a-z]\d+\s*$', '', name)
+        # Collapse whitespace
+        name = re.sub(r'\s+', ' ', name).strip()
+        return name
