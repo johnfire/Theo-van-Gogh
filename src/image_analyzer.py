@@ -212,6 +212,121 @@ class ImageAnalyzer:
         # Return description text
         return message.content[0].text.strip()
     
+    def generate_social_description(
+        self,
+        image_path: Path,
+        title: str,
+        max_chars: int = 200,
+    ) -> str:
+        """
+        Generate a short description for social media posts.
+
+        Args:
+            image_path: Path to the artwork image
+            title: Title of the artwork
+            max_chars: Maximum characters for the description
+
+        Returns:
+            Short description text (max_chars or less)
+        """
+        print(f"  → Generating social media description...")
+
+        # Encode image
+        image_data = self._encode_image(image_path)
+        media_type = self._get_image_media_type(image_path)
+
+        # Create prompt for short description
+        prompt = f"""You are writing a brief, engaging social media description for this artwork titled "{title}".
+
+Write a concise description that:
+- Captures the essence and mood of the painting in 1-2 sentences
+- Is engaging and compelling for social media
+- Is MAXIMUM {max_chars} characters (including spaces)
+- Focuses on what makes this piece special or interesting
+- Uses accessible, inviting language
+
+Return ONLY the description text, nothing else. No hashtags, no title repetition, just the description."""
+
+        # Call Claude API
+        message = self.client.messages.create(
+            model=self.model,
+            max_tokens=MAX_TOKENS,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": media_type,
+                                "data": image_data,
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": prompt,
+                        },
+                    ],
+                }
+            ],
+        )
+
+        # Get and truncate description if needed
+        description = message.content[0].text.strip()
+        if len(description) > max_chars:
+            description = description[:max_chars - 3] + "..."
+
+        return description
+
+    def summarize_to_short_description(
+        self,
+        long_description: str,
+        max_chars: int = 200,
+    ) -> str:
+        """
+        Summarize a long gallery description to a short social media description.
+
+        Args:
+            long_description: The full gallery description text
+            max_chars: Maximum characters for the short description
+
+        Returns:
+            Summarized short description (max_chars or less)
+        """
+        # Create prompt for summarization
+        prompt = f"""Summarize this art gallery description into a brief, engaging social media post.
+
+Original description:
+{long_description}
+
+Create a concise summary that:
+- Captures the key essence and mood in 1-2 sentences
+- Is MAXIMUM {max_chars} characters (including spaces)
+- Is engaging for social media
+- Focuses on what makes this piece special
+
+Return ONLY the summary text, nothing else. No hashtags, no extra commentary."""
+
+        # Call Claude API (text-only, no image needed)
+        message = self.client.messages.create(
+            model=self.model,
+            max_tokens=MAX_TOKENS,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+        )
+
+        # Get and truncate if needed
+        short_desc = message.content[0].text.strip()
+        if len(short_desc) > max_chars:
+            short_desc = short_desc[:max_chars - 3] + "..."
+
+        return short_desc
+
     def get_image_dimensions(self, image_path: Path) -> str:
         """
         Extract dimensions from image EXIF data or actual pixel dimensions.

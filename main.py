@@ -38,13 +38,14 @@ def cli(ctx):
         
         # After admin mode (or if skipped), show available commands
         console.print("Available commands:")
-        console.print("  [cyan]python main.py process[/cyan]      - Process paintings")
-        console.print("  [cyan]python main.py verify-config[/cyan] - Verify configuration")
-        console.print("  [cyan]python main.py admin[/cyan]         - Enter admin mode")
-        console.print("  [cyan]python main.py upload-faso[/cyan]   - Upload to FASO")
-        console.print("  [cyan]python main.py post-social[/cyan]  - Post to social media")
-        console.print("  [cyan]python main.py schedule-post[/cyan] - Schedule a post")
+        console.print("  [cyan]python main.py process[/cyan]       - Process paintings")
+        console.print("  [cyan]python main.py verify-config[/cyan]  - Verify configuration")
+        console.print("  [cyan]python main.py admin[/cyan]          - Enter admin mode")
+        console.print("  [cyan]python main.py upload-faso[/cyan]    - Upload to FASO")
+        console.print("  [cyan]python main.py post-social[/cyan]   - Post to social media")
+        console.print("  [cyan]python main.py schedule-post[/cyan]  - Schedule a post")
         console.print("  [cyan]python main.py check-schedule[/cyan] - Run scheduled posts")
+        console.print("  [cyan]python main.py daily-post[/cyan]     - Daily automated posting")
         console.print("\nRun with --help for more information")
 
 
@@ -501,6 +502,39 @@ def check_schedule():
         check_schedule_cli()
     except Exception as e:
         console.print(f"[red]Schedule check error: {e}[/red]")
+
+
+@cli.command()
+def daily_post():
+    """
+    Run daily automated social media posting.
+
+    Posts one random painting to all configured platforms.
+    Uses rounds logic to ensure all paintings are posted before repeating.
+    Designed to be called by cron job at 8:30 AM daily.
+
+    Example:
+        python main.py daily-post
+    """
+    from src.social.daily_poster import run_daily_post
+    from config.settings import METADATA_OUTPUT_PATH
+
+    ui = CLIInterface()
+
+    try:
+        success = run_daily_post(METADATA_OUTPUT_PATH)
+        if not success:
+            ui.print_error("Daily post failed")
+            import sys
+            sys.exit(1)
+    except KeyboardInterrupt:
+        ui.print_warning("\nDaily posting interrupted by user")
+    except Exception as e:
+        ui.print_error(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+        import sys
+        sys.exit(1)
 
 
 if __name__ == '__main__':

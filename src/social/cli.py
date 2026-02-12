@@ -134,6 +134,29 @@ def post_social_cli():
             failed.append(title)
             continue
 
+        # Check if description exists, generate if missing
+        if not metadata.get("description"):
+            console.print("  [yellow]No description found - generating social media description...[/yellow]")
+            from src.image_analyzer import ImageAnalyzer
+            analyzer = ImageAnalyzer()
+
+            # Generate 200 character description
+            short_desc = analyzer.generate_social_description(
+                image_path,
+                title,
+                max_chars=200
+            )
+
+            # Update metadata
+            metadata["description"] = short_desc
+
+            # Save to file
+            import json
+            with open(metadata_path, "w") as f:
+                json.dump(metadata, f, indent=2)
+
+            console.print(f"  [green]Generated and saved description ({len(short_desc)} chars)[/green]")
+
         # Format post text
         text = format_post_text(metadata, max_words=75)
 
