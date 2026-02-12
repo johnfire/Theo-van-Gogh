@@ -105,16 +105,18 @@ class TestGetImagePath:
         assert _get_image_path(metadata) == img
 
     def test_fallback_to_big(self, tmp_path):
+        # Big files are no longer used for social media (5MB API limit)
         img = tmp_path / "test.jpg"
         img.touch()
         metadata = {"files": {"instagram": None, "big": str(img)}}
-        assert _get_image_path(metadata) == img
+        assert _get_image_path(metadata) is None
 
     def test_big_as_list(self, tmp_path):
+        # Big files are no longer used for social media (5MB API limit)
         img = tmp_path / "test.jpg"
         img.touch()
         metadata = {"files": {"instagram": None, "big": [str(img)]}}
-        assert _get_image_path(metadata) == img
+        assert _get_image_path(metadata) is None
 
     def test_no_files(self):
         metadata = {"files": {"instagram": None, "big": None}}
