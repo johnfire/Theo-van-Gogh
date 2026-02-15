@@ -35,8 +35,21 @@ echo "👀 Watching CI for $REPO…"
 echo "   (Ctrl-C to stop watching — CI will still run on GitHub)"
 echo ""
 
+# ── Get the latest run ID (retry up to 10s for it to register) ───────────────
+RUN_ID=""
+for i in $(seq 1 5); do
+    RUN_ID=$(gh run list --repo "$REPO" --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null)
+    [ -n "$RUN_ID" ] && break
+    sleep 2
+done
+
+if [ -z "$RUN_ID" ]; then
+    echo "⚠  Could not get run ID from GitHub. Check manually: gh run list"
+    exit 1
+fi
+
 # ── Watch and notify ─────────────────────────────────────────────────────────
-gh run watch --exit-status
+gh run watch "$RUN_ID" --exit-status
 CI_EXIT=$?
 
 echo ""
