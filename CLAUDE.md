@@ -1,6 +1,6 @@
 # CLAUDE.md — AI Coding Guide for Theo-van-Gogh
 
-Art management automation system for working artists. See ARCHITECTURE.md for full structure and data schemas.
+Art management automation system for working artists. See docs/ARCHITECTURE.md for full structure and data schemas.
 
 ## Quick Orientation
 
@@ -8,7 +8,7 @@ Art management automation system for working artists. See ARCHITECTURE.md for fu
 - **All paths:** `config/settings.py` — never hardcode paths elsewhere
 - **Metadata schema:** `src/metadata_manager.py` — source of truth for JSON structure
 - **Tests:** `tests/` — run with `source venv/bin/activate && pytest`
-- **Docs:** ARCHITECTURE.md (structure), INSTALL.md, FASO_SETUP.md, TESTING.md
+- **Docs:** docs/ARCHITECTURE.md (structure), docs/INSTALL.md, docs/FASO_SETUP.md, docs/TESTING.md
 
 ## Running Things
 
