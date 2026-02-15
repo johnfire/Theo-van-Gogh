@@ -47,6 +47,12 @@ Copy the example environment file and edit it with your settings:
 cp .env.example .env
 ```
 
+Secure the `.env` file so only you can read it:
+
+```bash
+chmod 600 .env
+```
+
 Edit `.env`:
 
 ```bash
@@ -107,6 +113,14 @@ python main.py verify-config
 ```
 
 This checks that your API key is set, all paths exist, and the folder structure is valid.
+
+## Install Git Hooks
+
+To enable the pre-push test gate (blocks pushes if tests fail):
+
+```bash
+bash testing-scripts/install-hooks.sh
+```
 
 ## Running Tests
 
