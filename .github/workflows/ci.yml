@@ -51,7 +51,7 @@ jobs:
     
     - name: Run tests with pytest
       run: |
-        pytest tests/ -v --cov=src --cov=config --cov-report=xml --cov-report=term-missing
+        pytest tests/ -v --cov=src --cov=config --cov-report=xml --cov-report=term-missing --cov-fail-under=40
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
@@ -105,7 +105,7 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     
     steps:
     - uses: actions/checkout@v4

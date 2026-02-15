@@ -1,0 +1,38 @@
+#!/bin/bash
+# Pre-push hook: runs the full test suite before every push.
+# If tests fail the push is blocked and a desktop notification is fired.
+#
+# Install with:  bash testing-scripts/install-hooks.sh
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+VENV="$REPO_ROOT/venv/bin/activate"
+
+echo ""
+echo "━━━ Pre-push: running tests ━━━"
+
+if [ ! -f "$VENV" ]; then
+    echo "⚠  venv not found at $VENV — skipping test check"
+    exit 0
+fi
+
+# shellcheck disable=SC1090
+source "$VENV"
+cd "$REPO_ROOT" || exit 1
+
+pytest tests/ --tb=short -q
+EXIT_CODE=$?
+
+echo ""
+
+if [ $EXIT_CODE -ne 0 ]; then
+    echo "✗  Tests failed — push blocked."
+    DISPLAY="${DISPLAY:-:0}" notify-send -u critical -i dialog-error \
+        "Theo-van-Gogh" "Push BLOCKED — tests failed. Fix before pushing." 2>/dev/null || true
+    exit 1
+fi
+
+echo "✓  All tests passed — proceeding with push."
+DISPLAY="${DISPLAY:-:0}" notify-send -u normal -i dialog-ok \
+    "Theo-van-Gogh" "Tests passed. Pushing to GitHub…" 2>/dev/null || true
+
+exit 0
