@@ -19,6 +19,7 @@ _PLATFORM_REGISTRY = {
     "cara": ("src.social.cara", "CaraPlatform"),
     "threads": ("src.social.threads", "ThreadsPlatform"),
     "pixelfed": ("src.social.pixelfed", "PixelfedPlatform"),
+    "tumblr": ("src.social.tumblr", "TumblrPlatform"),
 }
 
 

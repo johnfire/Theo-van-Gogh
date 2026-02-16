@@ -30,6 +30,15 @@ PIXELFED_INSTANCE_URL = os.getenv("PIXELFED_INSTANCE_URL", "")
 PIXELFED_ACCESS_TOKEN = os.getenv("PIXELFED_ACCESS_TOKEN", "")
 PIXELFED_MAX_CAPTION_LENGTH = 2000   # safe default; varies by instance
 
+# Tumblr Configuration
+TUMBLR_CONSUMER_KEY = os.getenv("TUMBLR_CONSUMER_KEY", "")
+TUMBLR_CONSUMER_SECRET = os.getenv("TUMBLR_CONSUMER_SECRET", "")
+TUMBLR_OAUTH_TOKEN = os.getenv("TUMBLR_OAUTH_TOKEN", "")
+TUMBLR_OAUTH_SECRET = os.getenv("TUMBLR_OAUTH_SECRET", "")
+TUMBLR_BLOG_NAME = os.getenv("TUMBLR_BLOG_NAME", "")
+TUMBLR_DEFAULT_STATE = "published"   # or "draft" for testing
+TUMBLR_MAX_TAGS = 30                 # Tumblr allows up to 30 tags per post
+
 # Social Media
 SOCIAL_MEDIA_WEBSITE = "artbychristopherrehm.com"
 

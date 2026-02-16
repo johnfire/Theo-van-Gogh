@@ -2,6 +2,7 @@ anthropic>=0.18.0
 atproto>=0.0.55
 pillow>=10.0.0
 playwright>=1.40.0
+pytumblr>=0.0.8
 python-dotenv>=1.0.0
 click>=8.1.0
 rich>=13.0.0
