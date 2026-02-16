@@ -4,6 +4,7 @@ Called from admin_mode.py and main.py.
 """
 
 import json
+import subprocess
 from datetime import datetime
 from pathlib import Path
 
@@ -12,6 +13,27 @@ from rich.prompt import Prompt, Confirm, IntPrompt
 from rich.table import Table
 
 console = Console()
+
+_LOG_FILE = Path("~/.config/theo-van-gogh/social_post_log.txt").expanduser()
+
+
+def _notify_post_success(title: str, platform_name: str, post_url: str | None) -> None:
+    """Log and send a desktop notification for a successful social media post."""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    url_part = f" — {post_url}" if post_url else ""
+    log_line = f"[{timestamp}] Posted '{title}' to {platform_name}{url_part}\n"
+
+    _LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(_LOG_FILE, "a") as f:
+        f.write(log_line)
+
+    message = f"'{title}' posted to {platform_name}"
+    if post_url:
+        message += f"\n{post_url}"
+    subprocess.run(
+        ["notify-send", "--app-name=Theo van Gogh", "Social Media Post", message],
+        check=False,
+    )
 
 
 def post_social_cli():
@@ -179,6 +201,7 @@ def post_social_cli():
                 console.print(f"  [dim]{result.post_url}[/dim]")
             _update_social_media_tracking(metadata_path, metadata, platform_name, result.post_url)
             succeeded.append(title)
+            _notify_post_success(title, platform_name, result.post_url)
         else:
             console.print(f"  [red]Failed: {result.error}[/red]")
             failed.append(title)

@@ -461,9 +461,11 @@ def upload_faso():
 def post_social():
     """Post artwork to social media platforms."""
     from src.social.cli import post_social_cli
+    from src.activity_log import log_activity
 
     ui = CLIInterface()
     ui.print_header("Social Media Post")
+    log_activity("CLI: post-social")
 
     try:
         post_social_cli()
@@ -497,7 +499,9 @@ def schedule_post():
 def check_schedule():
     """Execute pending scheduled posts (designed for cron job)."""
     from src.social.cli import check_schedule_cli
+    from src.activity_log import log_activity
 
+    log_activity("CLI: check-schedule")
     try:
         check_schedule_cli()
     except Exception as e:
@@ -517,9 +521,11 @@ def daily_post():
         python main.py daily-post
     """
     from src.social.daily_poster import run_daily_post
+    from src.activity_log import log_activity
     from config.settings import METADATA_OUTPUT_PATH
 
     ui = CLIInterface()
+    log_activity("CLI: daily-post")
 
     try:
         success = run_daily_post(METADATA_OUTPUT_PATH)

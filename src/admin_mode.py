@@ -12,6 +12,8 @@ from rich.prompt import Prompt, Confirm, IntPrompt
 from rich.table import Table
 from rich.panel import Panel
 
+from src.activity_log import log_admin_action
+
 console = Console()
 
 
@@ -32,7 +34,10 @@ class AdminMode:
                 choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "0"],
                 default="0"
             )
-            
+
+            if choice != 0:
+                log_admin_action(choice)
+
             if choice == 0:
                 self.console.print("\n[green]Exiting admin mode[/green]")
                 break
