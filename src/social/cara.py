@@ -75,7 +75,7 @@ class CaraPlatform(SocialPlatform):
         async with async_playwright() as p:
             context = await p.chromium.launch_persistent_context(
                 user_data_dir=str(self.profile_dir),
-                headless=False,   # visible for now — helps diagnose selector issues
+                headless=False,
                 viewport={"width": 1920, "height": 1080},
                 args=["--disable-blink-features=AutomationControlled"],
             )
@@ -88,7 +88,7 @@ class CaraPlatform(SocialPlatform):
 
                 # Navigate to Cara home
                 await page.goto(CARA_HOME)
-                await page.wait_for_load_state("networkidle")
+                await page.wait_for_load_state("domcontentloaded")
                 await asyncio.sleep(2)
                 await page.screenshot(path=str(SCREENSHOTS_DIR / "cara_01_home.png"))
 
@@ -100,14 +100,11 @@ class CaraPlatform(SocialPlatform):
                         error="Cara session expired. Run: python main.py cara-login"
                     )
 
-                # Click the "+ Post" button to open the post dialog
-                try:
-                    await page.get_by_role("button", name="+ Post").click(timeout=5_000)
-                except Exception:
-                    try:
-                        await page.locator("button", has_text="Post").first.click(timeout=5_000)
-                    except Exception:
-                        await page.locator("a, button").filter(has_text="Post").first.click(timeout=5_000)
+                # Wait for the React app to hydrate, then click the Post button.
+                # domcontentloaded fires before hydration, so wait explicitly.
+                post_btn = page.locator("a, button").filter(has_text="Post").first
+                await post_btn.wait_for(state="attached", timeout=20_000)
+                await post_btn.click(timeout=10_000)
 
                 await asyncio.sleep(2)
                 await page.screenshot(path=str(SCREENSHOTS_DIR / "cara_02_after_post_click.png"))
@@ -163,7 +160,7 @@ class CaraPlatform(SocialPlatform):
                 # makes the button invisible to Playwright's hit-testing.
                 await submit_btn.click(force=True, timeout=10_000)
 
-                await page.wait_for_load_state("networkidle")
+                await page.wait_for_load_state("domcontentloaded")
                 await asyncio.sleep(3)
                 await page.screenshot(path=str(SCREENSHOTS_DIR / "cara_06_after_submit.png"))
 
@@ -210,7 +207,7 @@ class CaraPlatform(SocialPlatform):
 
             page = context.pages[0] if context.pages else await context.new_page()
             await page.goto(CARA_LOGIN_URL)
-            await page.wait_for_load_state("networkidle")
+            await page.wait_for_load_state("domcontentloaded")
 
             console.print("[bold green]Browser open — log in now.[/bold green]")
             input("\nPress Enter when you can see your Cara home feed...")
