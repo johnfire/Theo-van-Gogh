@@ -16,7 +16,10 @@ from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt, Confirm
 
+from src.app_logger import get_logger
+
 console = Console()
+logger = get_logger("faso")
 
 
 class FASOUploader:
@@ -97,6 +100,7 @@ class FASOUploader:
         """
         title = metadata.get("title", {}).get("selected", "Unknown")
         console.print(f"\n[bold cyan]Uploading: {title}[/bold cyan]")
+        logger.info("Starting FASO upload for '%s'", title)
 
         if not await self._navigate_to_upload_page():
             return False
@@ -122,6 +126,7 @@ class FASOUploader:
             return False
 
         console.print(f"[bold green]Successfully uploaded: {title}[/bold green]")
+        logger.info("FASO upload complete for '%s'", title)
         return True
 
     async def _navigate_to_upload_page(self) -> bool:
@@ -141,6 +146,7 @@ class FASOUploader:
             return True
         except Exception as e:
             console.print(f"[red]Could not navigate to upload page: {e}[/red]")
+            logger.error("Could not navigate to FASO upload page: %s", e)
             await self._take_error_screenshot("navigate")
             return False
 
@@ -173,6 +179,7 @@ class FASOUploader:
             return True
         except Exception as e:
             console.print(f"[red]Failed to upload image: {e}[/red]")
+            logger.error("Failed to upload image file: %s", e)
             await self._take_error_screenshot("upload_image")
             return False
 
@@ -187,6 +194,7 @@ class FASOUploader:
             return True
         except Exception as e:
             console.print(f"[red]Upload did not complete in time: {e}[/red]")
+            logger.error("FASO upload timed out waiting for confirmation: %s", e)
             await self._take_error_screenshot("upload_wait")
             return False
 
@@ -203,6 +211,7 @@ class FASOUploader:
             return True
         except Exception as e:
             console.print(f"[red]Could not click Continue: {e}[/red]")
+            logger.error("Could not click Continue after upload: %s", e)
             await self._take_error_screenshot("continue")
             return False
 
@@ -284,6 +293,7 @@ class FASOUploader:
 
         except Exception as e:
             console.print(f"[red]Error filling form: {e}[/red]")
+            logger.error("Error filling FASO metadata form: %s", e)
             await self._take_error_screenshot("fill_form")
             return False
 
@@ -301,6 +311,7 @@ class FASOUploader:
             return True
         except Exception as e:
             console.print(f"[red]Could not save form: {e}[/red]")
+            logger.error("Could not save FASO form: %s", e)
             await self._take_error_screenshot("save")
             return False
 

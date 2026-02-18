@@ -16,10 +16,13 @@ from src.file_manager import FileManager
 from src.metadata_manager import MetadataManager
 from src.cli_interface import CLIInterface
 from src.admin_mode import AdminMode
+from src.app_logger import configure_logging, get_logger
 from config.settings import PAINTINGS_BIG_PATH, PAINTINGS_INSTAGRAM_PATH
 
 
 console = Console()
+configure_logging()
+_log = get_logger("cli")
 
 
 @click.group(invoke_without_command=True)
@@ -169,8 +172,7 @@ def process():
         sys.exit(0)
     except Exception as e:
         ui.print_error(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
+        _log.exception("process command failed")
         sys.exit(1)
 
 
@@ -453,8 +455,7 @@ def upload_faso():
         ui.print_warning("\nUpload interrupted by user")
     except Exception as e:
         ui.print_error(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
+        _log.exception("upload-faso command failed")
 
 
 @cli.command()
@@ -473,8 +474,7 @@ def post_social():
         ui.print_warning("\nPosting interrupted by user")
     except Exception as e:
         ui.print_error(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
+        _log.exception("post-social command failed")
 
 
 @cli.command()
@@ -510,8 +510,7 @@ def schedule_post():
         ui.print_warning("\nScheduling interrupted by user")
     except Exception as e:
         ui.print_error(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
+        _log.exception("schedule-post command failed")
 
 
 @cli.command()
@@ -525,6 +524,7 @@ def check_schedule():
         check_schedule_cli()
     except Exception as e:
         console.print(f"[red]Schedule check error: {e}[/red]")
+        _log.exception("check-schedule command failed")
 
 
 @cli.command()
@@ -556,9 +556,7 @@ def daily_post():
         ui.print_warning("\nDaily posting interrupted by user")
     except Exception as e:
         ui.print_error(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
-        import sys
+        _log.exception("daily-post command failed")
         sys.exit(1)
 
 

@@ -20,6 +20,9 @@ from config.prompts import (
     TITLE_GENERATION_PROMPT,
     DESCRIPTION_GENERATION_PROMPT,
 )
+from src.app_logger import get_logger
+
+logger = get_logger("metadata")
 
 
 class ImageAnalyzer:
@@ -118,6 +121,7 @@ class ImageAnalyzer:
         except (json.JSONDecodeError, ValueError) as e:
             print(f"  ⚠ Warning: Could not parse titles as JSON: {e}")
             print(f"  Raw response: {response_text}")
+            logger.warning("Could not parse title response as JSON: %s", e)
             # Fallback: try to extract titles from text
             return self._extract_titles_from_text(response_text)
     
@@ -356,4 +360,5 @@ Return ONLY the summary text, nothing else. No hashtags, no extra commentary."""
                     return f"{width}px x {height}px"
         except Exception as e:
             print(f"  ⚠ Warning: Could not extract dimensions: {e}")
+            logger.warning("Could not extract dimensions from %s: %s", image_path, e)
             return "Dimensions unknown"

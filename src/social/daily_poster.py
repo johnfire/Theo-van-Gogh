@@ -12,7 +12,10 @@ from typing import List, Tuple, Dict, Any
 
 from rich.console import Console
 
+from src.app_logger import get_logger
+
 console = Console()
+logger = get_logger("social.daily")
 
 # List of platforms for daily posting
 DAILY_PLATFORMS = [
@@ -264,6 +267,7 @@ def post_to_all_platforms(
     image_path = get_image_path(metadata)
     if not image_path:
         console.print(f"  [red]No image file found - aborting[/red]")
+        logger.error("No image file found for '%s' — aborting post", title)
         return {"succeeded": [], "failed": platforms, "warnings": ["No image file"]}
 
     # Ensure short description exists
@@ -318,17 +322,20 @@ def post_to_all_platforms(
 
             # Post
             console.print(f"  [cyan]Posting to {platform.display_name}...[/cyan]")
+            logger.info("Posting '%s' to %s", title, platform_name)
             alt_text = metadata.get("description", "")  # Use full description as alt text
             result = platform.post_image(image_path, text, alt_text)
 
             if result.success:
                 console.print(f"  [green]✓ {platform.display_name} posted[/green]")
+                logger.info("Posted '%s' to %s — %s", title, platform_name, result.post_url or "no url")
                 _update_platform_metadata(metadata, platform_name, current_round, result.post_url)
                 results["succeeded"].append(platform_name)
                 from src.social.post_logger import log_post_success
                 log_post_success(platform_name, title, image_path, result.post_url)
             else:
                 console.print(f"  [red]✗ {platform.display_name} failed: {result.error}[/red]")
+                logger.warning("Post failed — painting='%s' platform=%s error=%s", title, platform_name, result.error)
                 results["failed"].append(platform_name)
                 results["warnings"].append(f"{platform.display_name}: {result.error}")
                 from src.social.post_logger import log_post_failure
@@ -336,6 +343,7 @@ def post_to_all_platforms(
 
         except Exception as e:
             console.print(f"  [red]✗ {platform.display_name} error: {e}[/red]")
+            logger.exception("Unexpected error posting '%s' to %s", title, platform_name)
             results["failed"].append(platform_name)
             results["warnings"].append(f"{platform.display_name}: {str(e)}")
             from src.social.post_logger import log_post_failure
@@ -390,6 +398,7 @@ def run_daily_post(metadata_path: Path) -> bool:
     all_paintings = find_all_painting_metadata(metadata_path)
     if not all_paintings:
         console.print("[red]No paintings found in metadata directory[/red]")
+        logger.error("Daily post aborted: no paintings found in %s", metadata_path)
         return False
 
     console.print(f"Found {len(all_paintings)} total paintings")
@@ -397,6 +406,7 @@ def run_daily_post(metadata_path: Path) -> bool:
     # Get current round
     current_round = get_current_round(metadata_path)
     console.print(f"Current round: {current_round}\n")
+    logger.info("Starting daily post run — round=%d, total_paintings=%d", current_round, len(all_paintings))
 
     # Find eligible paintings
     eligible = find_eligible_paintings(all_paintings, current_round, DAILY_PLATFORMS)
@@ -404,6 +414,7 @@ def run_daily_post(metadata_path: Path) -> bool:
     if not eligible:
         console.print("[yellow]All paintings have been posted for this round![/yellow]")
         console.print("Incrementing to next round...\n")
+        logger.info("Round %d complete — incrementing to next round", current_round)
         increment_round(metadata_path)
 
         # Try again with new round
@@ -412,6 +423,7 @@ def run_daily_post(metadata_path: Path) -> bool:
 
     if not eligible:
         console.print("[red]Still no eligible paintings - something is wrong[/red]")
+        logger.error("No eligible paintings after round increment — check metadata")
         return False
 
     console.print(f"Eligible paintings for posting: {len(eligible)}\n")
@@ -422,6 +434,7 @@ def run_daily_post(metadata_path: Path) -> bool:
 
     console.print(f"[bold]Selected painting:[/bold] {title}")
     console.print(f"[dim]File: {metadata_path.name}[/dim]\n")
+    logger.info("Selected painting: '%s' (%s)", title, metadata_path.name)
 
     # Post to all platforms
     results = post_to_all_platforms(metadata_path, metadata, DAILY_PLATFORMS, current_round)
@@ -430,6 +443,12 @@ def run_daily_post(metadata_path: Path) -> bool:
     console.print("\n[bold]Results:[/bold]")
     console.print(f"  Succeeded: [green]{len(results['succeeded'])}[/green]")
     console.print(f"  Failed: [red]{len(results['failed'])}[/red]")
+    logger.info(
+        "Daily post complete — painting='%s' succeeded=%d failed=%d",
+        title,
+        len(results["succeeded"]),
+        len(results["failed"]),
+    )
 
     if results["warnings"]:
         console.print(f"\n[yellow]Warnings:[/yellow]")
