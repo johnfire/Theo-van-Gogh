@@ -21,6 +21,7 @@ Log format (one block per attempt):
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 # Platforms that use Playwright — point to screenshots on failure
 _PLAYWRIGHT_PLATFORMS = {"cara", "instagram"}
@@ -49,8 +50,8 @@ def _get_logger() -> logging.Logger:
 def log_post_success(
     platform: str,
     title: str,
-    image_path: Path | None,
-    post_url: str | None,
+    image_path: Optional[Path],
+    post_url: Optional[str],
 ) -> None:
     """Write a success entry to the social log."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -64,7 +65,7 @@ def log_post_success(
 def log_post_failure(
     platform: str,
     title: str,
-    image_path: Path | None,
+    image_path: Optional[Path],
     error: str,
 ) -> None:
     """Write a failure entry with as much diagnostic context as possible.
