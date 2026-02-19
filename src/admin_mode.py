@@ -28,10 +28,11 @@ class AdminMode:
     def run(self):
         """Run the admin mode menu loop."""
         while True:
+            self._show_login_alerts()
             self.show_main_menu()
             choice = IntPrompt.ask(
                 "\nSelect option",
-                choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "0"],
+                choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "0"],
                 default="0"
             )
 
@@ -73,6 +74,8 @@ class AdminMode:
                 self.view_schedule()
             elif choice == 16:
                 self.migrate_tracking()
+            elif choice == 17:
+                self.manual_site_login()
     
     def show_main_menu(self):
         """Display the main admin menu."""
@@ -98,6 +101,7 @@ class AdminMode:
         table.add_row("14", "Schedule Posts")
         table.add_row("15", "View Schedule")
         table.add_row("16", "Migrate Tracking Data")
+        table.add_row("17", "Manual Site Login (Cara / FASO)")
         table.add_row("0", "Exit Admin Mode")
         
         self.console.print(table)
@@ -546,6 +550,81 @@ class AdminMode:
             return
 
         migrate()
+
+        Prompt.ask("\nPress Enter to continue")
+
+    def _show_login_alerts(self):
+        """Display login expiry warnings for browser-session platforms."""
+        from config.settings import LOGIN_STATUS_PATH
+        from src.login_tracker import LoginTracker
+
+        tracker = LoginTracker(LOGIN_STATUS_PATH)
+        alerts = tracker.get_alerts()
+        if not alerts:
+            return
+
+        self.console.print()
+        for platform, status in alerts:
+            label = platform.upper()
+            if status["status"] == "never":
+                self.console.print(
+                    f"[bold red]LOGIN ALERT: {label} — never logged in. Use option 17.[/bold red]"
+                )
+            elif status["status"] == "expired":
+                self.console.print(
+                    f"[bold red]LOGIN ALERT: {label} — login expired "
+                    f"({status['days_since']} days ago). Use option 17.[/bold red]"
+                )
+            elif status["status"] == "warn":
+                self.console.print(
+                    f"[yellow]LOGIN WARNING: {label} — login expires in "
+                    f"{status['days_remaining']} day(s). Use option 17 soon.[/yellow]"
+                )
+
+    def manual_site_login(self):
+        """Run manual browser login for Cara or FASO and record the timestamp."""
+        from config.settings import LOGIN_STATUS_PATH
+        from src.login_tracker import LoginTracker
+
+        self.console.print("\n[bold]Manual Site Login[/bold]")
+        self.console.print("[dim]Opens a browser so you can log in manually. Session is saved.[/dim]\n")
+
+        table = Table(show_header=False)
+        table.add_column("Option", style="cyan", width=8)
+        table.add_column("Site")
+        table.add_row("1", "FASO (Fine Art Studio Online)")
+        table.add_row("2", "Cara")
+        table.add_row("0", "Back")
+        self.console.print(table)
+
+        choice = Prompt.ask("\nSelect site", choices=["1", "2", "0"], default="0")
+        if choice == "0":
+            return
+
+        tracker = LoginTracker(LOGIN_STATUS_PATH)
+
+        if choice == "1":
+            import asyncio
+            from manual_login import manual_login_and_save
+            try:
+                asyncio.run(manual_login_and_save())
+                tracker.record_login("faso")
+                self.console.print("[green]FASO login recorded.[/green]")
+            except KeyboardInterrupt:
+                self.console.print("[yellow]Login cancelled.[/yellow]")
+            except Exception as e:
+                self.console.print(f"[red]Error: {e}[/red]")
+
+        elif choice == "2":
+            from src.social.cara import CaraPlatform
+            try:
+                CaraPlatform().setup_session()
+                tracker.record_login("cara")
+                self.console.print("[green]Cara login recorded.[/green]")
+            except KeyboardInterrupt:
+                self.console.print("[yellow]Login cancelled.[/yellow]")
+            except Exception as e:
+                self.console.print(f"[red]Error: {e}[/red]")
 
         Prompt.ask("\nPress Enter to continue")
 

@@ -68,6 +68,7 @@ VIDEOS_PATH = Path(os.getenv("VIDEOS_PATH", "~/ai-workzone/videos")).expanduser(
 COOKIES_DIR = Path(os.getenv("COOKIES_DIR", "~/.config/theo-van-gogh/cookies")).expanduser()
 FASO_COOKIES_PATH = COOKIES_DIR / "faso_cookies.json"
 INSTAGRAM_COOKIES_PATH = COOKIES_DIR / "instagram_cookies.json"
+LOGIN_STATUS_PATH = COOKIES_DIR / "login_status.json"
 
 # Debug and temporary files
 DEBUG_DIR = Path(os.getenv("DEBUG_DIR", "~/.config/theo-van-gogh/debug")).expanduser()
